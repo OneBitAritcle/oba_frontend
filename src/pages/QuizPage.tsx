@@ -165,23 +165,27 @@ export default function QuizPage() {
           </div>
         ))}
         {/* 채점하러가기 버튼 */}
-          <button
-            onClick={() => console.log("채점하러가기 버튼 클릭됨")}
-            style={{
-              marginTop: "10px",
-              padding: "12px 50px",
-              borderRadius: "10px",
-              border: "1px solid #ccc",
-              background: "#e4ffeaff",
-              cursor: "pointer",
-              alignSelf: "center",
-              fontSize: "15px",
-              fontWeight: "600",
-            }}
-          >
-            채점하러가기
-          </button>
-
+        <button
+          onClick={() => console.log("채점하러가기 버튼 클릭됨")}
+          disabled={Object.keys(selected).length < quizList.length} // ✅ 조건 추가
+          style={{
+            marginTop: "20px",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            border: "1px solid #ccccccff",
+            background:
+              Object.keys(selected).length < quizList.length ? "#eee" : "#eefff3ff", // 비활성화 시 회색
+            cursor:
+              Object.keys(selected).length < quizList.length ? "not-allowed" : "pointer",
+            alignSelf: "center",
+            fontSize: "15px",
+            fontWeight: "600",
+            color:
+              Object.keys(selected).length < quizList.length ? "#999" : "#000",
+          }}
+        >
+          채점하러가기
+        </button>
       </div>
     </div>
   );

@@ -150,7 +150,7 @@ export default function article_main() {
           </div>
           {/* 요약 키워드 */}
             <button
-              onClick={() => console.log("키워드 페이지 이동 예정")}
+              onClick={() => navigate(`/summary/${article.id}`)}
               style={{
                 fontSize: "12px",
                 marginTop: "8px",

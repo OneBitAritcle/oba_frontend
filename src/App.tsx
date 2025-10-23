@@ -4,6 +4,11 @@ import Login from "./pages/Login";
 import Article_main from "./pages/Article_main";
 import Article_detail from "./pages/Article_detail";
 import QuizPage from "./pages/QuizPage";
+import SummaryPage from "./pages/SummaryPage";
+import QuizHome from "./pages/QuizHome"; 
+import MyPage from "./pages/MyPage";
+
+
 
 export default function App() {
   return (
@@ -79,6 +84,11 @@ export default function App() {
         <Route path="/article_main" element={<Article_main />} />
         <Route path="/article_detail/:id" element={<Article_detail />} />
         <Route path="/quiz/:id" element={<QuizPage />} /> 
+        <Route path="/summary/:id" element={<SummaryPage />} />
+        <Route path="/quiz" element={<QuizHome />} />
+        <Route path="/My" element={<MyPage />} />
+
+
       </Routes>
     </BrowserRouter>
   );
