@@ -1,9 +1,13 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import checkIcon from "../assets/emoji/check.png";
+import { useNavigate } from "react-router-dom";
+
+
 
 
 export default function QuizPage() {
+  const navigate = useNavigate();
   const { id } = useParams();
   const articleId = Number(id) as keyof typeof quizData;
 
@@ -166,7 +170,14 @@ export default function QuizPage() {
         ))}
         {/* 채점하러가기 버튼 */}
         <button
-          onClick={() => console.log("채점하러가기 버튼 클릭됨")}
+          onClick={() =>
+            navigate(`/quiz_check/${id}`, {
+              state: {
+                quizList,              // 문제 데이터 전체
+                selectedAnswers: selected, // 사용자가 고른 보기들
+              },
+            })
+          }
           disabled={Object.keys(selected).length < quizList.length} // ✅ 조건 추가
           style={{
             marginTop: "20px",

@@ -7,6 +7,7 @@ import QuizPage from "./pages/QuizPage";
 import SummaryPage from "./pages/SummaryPage";
 import QuizHome from "./pages/QuizHome"; 
 import MyPage from "./pages/MyPage";
+import QuizCheck from "./pages/QuizCheck";
 
 
 
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="/summary/:id" element={<SummaryPage />} />
         <Route path="/quiz" element={<QuizHome />} />
         <Route path="/My" element={<MyPage />} />
+        <Route path="/quiz_check/:id" element={<QuizCheck />} />
 
 
       </Routes>
