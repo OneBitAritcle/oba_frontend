@@ -1,7 +1,8 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function Article_detail() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const articles = [
     {
@@ -31,27 +32,37 @@ export default function Article_detail() {
   }
 
   return (
+    // ✅ 전체 컨테이너를 세로(column) 방향으로 정렬해서
+    //    카드 → 버튼 순으로 쌓이게 함
     <div
       style={{
         minHeight: "100vh",
         backgroundColor: "#F7F3EA",
-        display: "flex",              // ✅ 중앙 정렬을 위한 Flex
-        justifyContent: "center",     // ✅ 수평 가운데
-        alignItems: "flex-start",     // ✅ 위쪽 기준
+        display: "flex",
+        flexDirection: "column", // ✅ 세로 배치
+        alignItems: "center", // ✅ 중앙 정렬
         padding: "60px 16px",
       }}
     >
+      {/* 🟩 카드 영역 */}
       <div
         style={{
           backgroundColor: "#fff",
           borderRadius: "16px",
           boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
           width: "100%",
-          maxWidth: "600px",           // ✅ 중앙 카드 최대 너비
+          maxWidth: "600px",
           padding: "32px",
+          marginBottom: "24px", // ✅ 버튼과의 간격
         }}
       >
-        <h1 style={{ fontSize: "24px", marginBottom: "12px", textAlign: "center" }}>
+        <h1
+          style={{
+            fontSize: "24px",
+            marginBottom: "12px",
+            textAlign: "center",
+          }}
+        >
           {article.title}
         </h1>
         <p
@@ -74,7 +85,9 @@ export default function Article_detail() {
         >
           {article.content}
         </p>
-        {/* <div style={{ display: "flex", justifyContent: "center" }}>
+
+        {/* 돌아가기 버튼은 카드 안쪽 유지 */}
+        <div style={{ display: "flex", justifyContent: "center" }}>
           <button
             onClick={() => window.history.back()}
             style={{
@@ -88,7 +101,25 @@ export default function Article_detail() {
           >
             ← 돌아가기
           </button>
-        </div> */}
+        </div>
+      </div>
+
+      {/* ✅ 문제 풀러가기 버튼: 카드 바깥, 중앙정렬 상태로 아래쪽 배치 */}
+      <div style={{ textAlign: "center" }}>
+        <button
+          onClick={() => navigate(`/quiz/${id}`)}
+          style={{
+            background: "#fff",
+            border: "1px solid #ccc",
+            padding: "10px 24px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontSize: "15px",
+            fontWeight: "600",
+          }}
+        >
+          🧠 문제 풀러가기
+        </button>
       </div>
     </div>
   );
