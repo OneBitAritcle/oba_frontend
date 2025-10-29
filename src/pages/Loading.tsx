@@ -1,4 +1,7 @@
+import { useNavigate } from "react-router-dom";
+
 export default function Loading() {
+  const navigate = useNavigate();
   return (
     <div
       style={{
@@ -27,11 +30,31 @@ export default function Loading() {
 
 
       <img
-        src="src\assets\icons\burger.png" // 메인 기사 이미지
+        src="/src/assets/icons/burger.png" // 메인 기사 이미지
         alt="Knight Logo"
         style={{ width: "140px", marginBottom: "-20px" }}
       />
-      <p style={{ fontSize: "20px", marginBottom: "30px", fontFamily: "san-serif" }}>One Bite Article</p>
+      <p style={{ fontSize: "20px", marginBottom: "30px", fontFamily: "san-serif" }}
+      >
+        One Bite Article
+      </p>
+
+      {/* 🔹 임시 로그인 이동 버튼 */}
+      <button
+        onClick={() => navigate("/login")}
+        style={{
+          width: "100px",
+          height: "22px",
+          borderRadius: "8px",
+          border: "1px solid #aaa",
+          background: "white",
+          fontSize: "8px",
+          cursor: "pointer",
+        }}
+      >
+        로그인하러 가기 →
+      </button>
+
 
     </div>
   );

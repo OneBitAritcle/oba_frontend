@@ -10,9 +10,18 @@ import MyPage from "./pages/MyPage";
 import QuizCheck from "./pages/QuizCheck";
 
 
+// 🚩 App.tsx 최상단 import 아래쪽에 추가
+const linkStyle = ({ isActive }: { isActive: boolean }) => ({
+  color: isActive ? "#000" : "#999",
+  fontWeight: isActive ? "700" : "400",
+  fontSize: "16px",
+});
+
+
 
 export default function App() {
   return (
+
     <BrowserRouter>
       {/* 🟫 상단 네비게이션 바 */}
       <nav
@@ -29,53 +38,14 @@ export default function App() {
         }}
       >
         {/* NavLink는 현재 경로에 따라 스타일 자동 변경 */}
-        <NavLink
-          to="/"
-          style={({ isActive }) => ({
-            // textDecoration: isActive ? "underline" : "none",
-            color: isActive ? "#000" : "#999",
-            fontWeight: isActive ? "700" : "400",
-            fontSize: "16px",
-          })}
-        >
-          홈
-        </NavLink>
+        <NavLink to="/" style={linkStyle}>홈</NavLink>
 
-        <NavLink
-          to="/article_main"
-          style={({ isActive }) => ({
-            // textDecoration: isActive ? "underline" : "none",
-            color: isActive ? "#000" : "#999",
-            fontWeight: isActive ? "700" : "400",
-            fontSize: "16px",
-          })}
-        >
-          기사
-        </NavLink>
+        <NavLink to="/article_main" style={linkStyle}>기사</NavLink>
 
-        <NavLink
-          to="/quiz"
-          style={({ isActive }) => ({
-            // textDecoration: isActive ? "underline" : "none",
-            color: isActive ? "#000" : "#999",
-            fontWeight: isActive ? "700" : "400",
-            fontSize: "16px",
-          })}
-        >
-          퀴즈
-        </NavLink>
+        <NavLink to="/quiz" style={linkStyle}>퀴즈</NavLink>
 
-        <NavLink
-          to="/my"
-          style={({ isActive }) => ({
-            // textDecoration: isActive ? "underline" : "none",
-            color: isActive ? "#000" : "#999",
-            fontWeight: isActive ? "700" : "400",
-            fontSize: "16px",
-          })}
-        >
-          MY
-        </NavLink>
+        <NavLink to="/my" style={linkStyle}>MY</NavLink>
+
       </nav>
 
       {/* 🧩 페이지 라우팅 */}
