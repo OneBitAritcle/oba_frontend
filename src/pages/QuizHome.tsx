@@ -26,8 +26,9 @@ export default function QuizHome() {
 
       <h1 style={{ fontSize: "24px", marginBottom: "10px" }}>퀴즈 기록</h1>
       <p style={{ fontSize: "15px", color: "#555", maxWidth: "80%" }}>
-        내가 푼 퀴즈와 틀린 문제들을 한눈에 확인해보세요.
+        내가 푼 퀴즈와 틀린 문제들을 확인해보세요.
       </p>
     </div>
   );
 }
+ 
