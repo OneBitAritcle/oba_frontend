@@ -1,101 +1,137 @@
-// app/quiz/[id].tsx
 import { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
 export default function QuizPage() {
   const { id } = useLocalSearchParams();
 
-  // 🧠 더미 퀴즈 데이터
+  // 🧩 더미 퀴즈 데이터
   const quizList = [
     {
-      question: "Q1. AI 서밋 2025의 주요 주제는?",
-      options: ["AI 전략", "디자인 트렌드", "스포츠 산업", "요리 혁신"],
+      question: "Q1. 'AI & 데이터 서밋 2025'의 주요 의제는?",
+      options: [
+        "AI 도입 전략과 데이터 활용",
+        "패션 산업 트렌드",
+        "해양 생태계 보호",
+        "스포츠 과학 기술",
+      ],
       answer: 0,
-      explanation: "AI 서밋 2025에서는 인공지능 전략과 데이터 활용이 핵심 의제였습니다.",
+      explanation:
+        "AI & 데이터 서밋 2025에서는 AI와 데이터 전략, 인프라 혁신 등이 논의되었습니다.",
     },
     {
-      question: "Q2. AI 도입의 주요 장애 요인은?",
-      options: ["데이터 품질 부족", "AI 과잉 공급", "하드웨어 과잉", "규제 강화"],
+      question: "Q2. 한입기사의 주요 기능은?",
+      options: ["뉴스 요약 제공", "음악 재생", "지도 탐색", "게임 제공"],
       answer: 0,
-      explanation: "IDC 조사 결과, 데이터 품질 부족이 가장 큰 장애 요인으로 꼽혔습니다.",
+      explanation: "한입기사는 사용자가 빠르게 뉴스를 요약해 볼 수 있도록 하는 서비스입니다.",
     },
-    // ... 나머지 문제도 3~5개 정도
   ];
 
-  // 문제별 상태 관리
+  // 🔹 각 문제별 상태 저장
   const [selected, setSelected] = useState<{ [key: number]: number | null }>({});
-  const [checked, setChecked] = useState<{ [key: number]: boolean }>({});
-  const [showExplain, setShowExplain] = useState<{ [key: number]: boolean }>({});
+  const [isGraded, setIsGraded] = useState<{ [key: number]: boolean }>({});
+  const [isOpen, setIsOpen] = useState<{ [key: number]: boolean }>({});
 
   const handleSelect = (qIndex: number, oIndex: number) => {
     setSelected((prev) => ({ ...prev, [qIndex]: oIndex }));
   };
 
-  const handleCheck = (qIndex: number) => {
-    setChecked((prev) => ({ ...prev, [qIndex]: true }));
-    setShowExplain((prev) => ({ ...prev, [qIndex]: true }));
+  const handleGrade = (qIndex: number) => {
+    setIsGraded((prev) => ({ ...prev, [qIndex]: true }));
+    setIsOpen((prev) => ({ ...prev, [qIndex]: true })); // 기본 열림
   };
 
-  const toggleExplain = (qIndex: number) => {
-    setShowExplain((prev) => ({ ...prev, [qIndex]: !prev[qIndex] }));
+  const toggleOpen = (qIndex: number) => {
+    setIsOpen((prev) => ({ ...prev, [qIndex]: !prev[qIndex] }));
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
-      <Text style={styles.title}>🧠 기사 {id} 퀴즈</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>🧠 기사 {id} 퀴즈</Text>
 
       {quizList.map((quiz, qIndex) => {
-        const selectedOpt = selected[qIndex];
-        const isChecked = checked[qIndex];
-        const isCorrect = selectedOpt === quiz.answer;
+        const userAnswer = selected[qIndex];
+        const graded = isGraded[qIndex];
+        const open = isOpen[qIndex];
+        const isCorrect = userAnswer === quiz.answer;
 
         return (
-          <View key={qIndex} style={styles.card}>
+          <View key={qIndex} style={styles.quizBlock}>
             <Text style={styles.question}>{quiz.question}</Text>
 
             {quiz.options.map((opt, oIndex) => {
-              const isSelected = selectedOpt === oIndex;
+              const selectedOption = userAnswer === oIndex;
               return (
                 <TouchableOpacity
                   key={oIndex}
+                  disabled={graded}
                   onPress={() => handleSelect(qIndex, oIndex)}
                   style={[
                     styles.option,
-                    isSelected && { backgroundColor: "#E6E6E6" },
+                    selectedOption && styles.selected,
+                    graded &&
+                      oIndex === quiz.answer && { backgroundColor: "#DFF5CC" },
+                    graded &&
+                      selectedOption &&
+                      oIndex !== quiz.answer && { backgroundColor: "#FDDCDC" },
                   ]}
                 >
-                  <Text>{opt}</Text>
+                  <Text style={styles.optionText}>{opt}</Text>
                 </TouchableOpacity>
               );
             })}
 
-            {/* ✅ 문제별 채점 버튼 */}
-            {!isChecked ? (
+            {/* 채점하기 버튼 */}
+            <TouchableOpacity
+              onPress={() => handleGrade(qIndex)}
+              disabled={graded || selected[qIndex] === undefined}
+              style={[
+                styles.gradeBtn,
+                graded && styles.disabledBtn,
+                selected[qIndex] === undefined && styles.disabledBtn,
+              ]}
+            >
+              <Text style={styles.gradeText}>
+                {graded ? "채점 완료" : "채점하기"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 🍕 피자 토글 버튼 */}
+            {graded && (
               <TouchableOpacity
-                style={styles.checkButton}
-                onPress={() => handleCheck(qIndex)}
+                onPress={() => toggleOpen(qIndex)}
+                style={styles.pizzaToggle}
               >
-                <Text style={{ color: "white", fontWeight: "600" }}>채점하기</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.checkButton, { backgroundColor: "#999" }]}
-                onPress={() => toggleExplain(qIndex)}
-              >
-                <Text style={{ color: "white" }}>
-                  🍕 {showExplain[qIndex] ? "닫기" : "해설 보기"}
-                </Text>
+                <Image
+                  source={
+                    open
+                      ? require("../../assets/icons/pizza_down.png") // 🔽 피자
+                      : require("../../assets/icons/pizza_right.png") // ▶️ 피자
+                  }
+                  style={{ width: 36, height: 36 }}
+                />
               </TouchableOpacity>
             )}
 
-            {/* ✅ 정답/해설 영역 */}
-            {isChecked && showExplain[qIndex] && (
-              <View style={styles.explainBox}>
-                <Text style={{ fontWeight: "700" }}>
+            {/* 📘 해설 표시 영역 */}
+            {graded && open && (
+              <View style={styles.explanationBox}>
+                <Text
+                  style={[
+                    styles.resultText,
+                    { color: isCorrect ? "#2E7D32" : "#C62828" },
+                  ]}
+                >
                   {isCorrect ? "🎉 정답입니다!" : "❌ 오답입니다!"}
                 </Text>
-                <Text style={{ marginTop: 6 }}>{quiz.explanation}</Text>
+                <Text style={styles.explanation}>{quiz.explanation}</Text>
               </View>
             )}
           </View>
@@ -106,37 +142,81 @@ export default function QuizPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F3EA", padding: 20 },
-  title: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 20 },
-  card: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F7F3EA",
+    padding: 16,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  quizBlock: {
     backgroundColor: "white",
     borderRadius: 14,
     padding: 16,
     marginBottom: 24,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2,
   },
-  question: { fontSize: 16, fontWeight: "600", marginBottom: 12 },
+  question: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 14,
+  },
   option: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
     padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: "#fff",
   },
-  checkButton: {
+  optionText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  selected: {
+    borderColor: "#ff9f00",
+    backgroundColor: "#fff5e0",
+  },
+  gradeBtn: {
+    marginTop: 10,
     backgroundColor: "#222",
     paddingVertical: 10,
     borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
   },
-  explainBox: {
-    backgroundColor: "#F1F1F1",
+  gradeText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  disabledBtn: {
+    backgroundColor: "#aaa",
+  },
+  pizzaToggle: {
+    alignSelf: "flex-start", // 🍕 왼쪽 정렬
     marginTop: 10,
-    padding: 10,
-    borderRadius: 8,
+    marginLeft: 6, // 살짝 들여쓰기 (선택)
+  },
+
+  explanationBox: {
+    marginTop: 14,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    padding: 12,
+  },
+  resultText: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  explanation: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
   },
 });
