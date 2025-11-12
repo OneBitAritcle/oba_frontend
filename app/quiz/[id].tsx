@@ -103,37 +103,40 @@ export default function QuizPage() {
               </Text>
             </TouchableOpacity>
 
-            {/* 🍕 피자 토글 버튼 */}
+            {/* 📘 해설 표시 영역 (피자 왼쪽, 박스 오른쪽으로 이동) */}
             {graded && (
-              <TouchableOpacity
-                onPress={() => toggleOpen(qIndex)}
-                style={styles.pizzaToggle}
-              >
-                <Image
-                  source={
-                    open
-                      ? require("../../assets/icons/pizza_down.png") // 🔽 피자
-                      : require("../../assets/icons/pizza_right.png") // ▶️ 피자
-                  }
-                  style={{ width: 36, height: 36 }}
-                />
-              </TouchableOpacity>
-            )}
+              <View style={styles.explanationWrapper}>
+                {/* 🍕 피자 토글 버튼 */}
+                <TouchableOpacity onPress={() => toggleOpen(qIndex)}>
+                  <Image
+                    source={
+                      open
+                        ? require("../../assets/icons/toggle_1.png") // 🔽
+                        : require("../../assets/icons/toggle_2.png") // ▶️
+                    }
+                    style={styles.pizzaIcon}
+                  />
+                </TouchableOpacity>
 
-            {/* 📘 해설 표시 영역 */}
-            {graded && open && (
-              <View style={styles.explanationBox}>
-                <Text
-                  style={[
-                    styles.resultText,
-                    { color: isCorrect ? "#2E7D32" : "#C62828" },
-                  ]}
-                >
-                  {isCorrect ? "🎉 정답입니다!" : "❌ 오답입니다!"}
-                </Text>
-                <Text style={styles.explanation}>{quiz.explanation}</Text>
+                {/* 📦 해설 박스 */}
+                {open && (
+                  <View style={styles.explanationBox}>
+                    <Text
+                      style={[
+                        styles.resultText,
+                        { color: isCorrect ? "#2E7D32" : "#C62828" },
+                      ]}
+                    >
+                      {isCorrect ? "🎉 정답입니다!" : "❌ 오답입니다!"}
+                    </Text>
+                    <Text style={styles.explanation}>{quiz.explanation}</Text>
+                  </View>
+                )}
               </View>
             )}
+
+
+
           </View>
         );
       })}
@@ -203,17 +206,31 @@ const styles = StyleSheet.create({
     marginLeft: 6, // 살짝 들여쓰기 (선택)
   },
 
+  explanationWrapper: {
+  flexDirection: "row", // ⬅️ 버튼 + 박스 가로 배치
+  alignItems: "flex-start",
+  marginTop: 12,
+  },
+
+  pizzaIcon: {
+  width: 36,
+  height: 36,
+  marginRight: 10, // 🔹 버튼과 박스 간 간격
+  },
+
   explanationBox: {
-    marginTop: 14,
-    backgroundColor: "#f7f7f7",
-    borderRadius: 10,
-    padding: 12,
+  flex: 1,
+  backgroundColor: "#daedffff",
+  borderRadius: 10,
+  padding: 12,
   },
+
   resultText: {
+    fontWeight: "600",
     fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: 4,
   },
+
   explanation: {
     fontSize: 14,
     color: "#333",

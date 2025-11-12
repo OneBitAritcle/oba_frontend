@@ -6,26 +6,26 @@ export default function MyPage() {
 
   return (
     <View style={styles.container}>
-      {/* ⚙️ 설정 버튼 */}
-      <TouchableOpacity
-        style={styles.settingButton}
-        onPress={() => router.push("/settings")}
-      >
-        <Text style={styles.settingIcon}>⚙️</Text>
-      </TouchableOpacity>
-
       {/* 👤 프로필 카드 */}
       <View style={styles.profileCard}>
-        {/* <Image
-          source={{
-            uri: "https://cdn-icons-png.flaticon.com/512/1946/1946429.png",
-          }}
-          style={styles.profileImage}
-        /> */}
-        <Image source={require("../../assets/images/icon.png")} style={styles.profileImage} />
-        <View>
-          <Text style={styles.userId}>id: fad67ds744asd4g45</Text>
-          <Text style={styles.userName}>닉네임: 김제니</Text>
+        {/* ⚙️ 설정 버튼 */}
+        <TouchableOpacity
+          style={styles.settingButton}
+          onPress={() => router.push("/settings")}
+        >
+          <Text style={styles.settingIcon}>⚙️</Text>
+        </TouchableOpacity>
+
+        {/* 프로필 내용 */}
+        <View style={styles.profileInfo}>
+          <Image
+            source={require("../../assets/images/basic_profile.png")}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={styles.userId}>id: fad67ds744asd4g45</Text>
+            <Text style={styles.userName}>닉네임: 김제니</Text>
+          </View>
         </View>
       </View>
 
@@ -51,28 +51,32 @@ export default function MyPage() {
 
       {/* 🍕🍗 배경 데코 */}
       <Image
-        source={{
-          uri: "https://cdn-icons-png.flaticon.com/512/3132/3132693.png",
-        }}
-        style={[styles.decoration, { top: 60, left: 20 }]}
+        source={require("../../assets/pizza/pep.png")}
+        style={[styles.decoration, { top: 100, left: 30 }]}
       />
       <Image
-        source={{
-          uri: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-        }}
-        style={[styles.decoration, { bottom: 80, right: 30 }]}
+        source={require("../../assets/food/burger.png")}
+        style={[styles.decoration, { top: 200, left: 600 }]}
       />
       <Image
-        source={{
-          uri: "https://cdn-icons-png.flaticon.com/512/1046/1046796.png",
-        }}
-        style={[styles.decoration, { top: 250, right: 40 }]}
+        source={require("../../assets/food/potato.png")}
+        style={[styles.decoration, { top: 150, right: 60 }]}
       />
       <Image
-        source={{
-          uri: "https://cdn-icons-png.flaticon.com/512/883/883407.png",
-        }}
-        style={[styles.decoration, { bottom: 60, left: 40 }]}
+        source={require("../../assets/pizza/mar.png")}
+        style={[styles.decoration, { top: 600, right: 100 }]}
+      />
+      <Image
+        source={require("../../assets/food/ckin.png")}
+        style={[styles.decoration, { top: 700, left: 300 }]}
+      />
+      <Image
+        source={require("../../assets/food/chic.png")}
+        style={[styles.decoration, { bottom: 150, right: 250 }]}
+      />
+      <Image
+        source={require("../../assets/pizza/hwaa.png")}
+        style={[styles.decoration, { bottom: 60, right: 500 }]}
       />
     </View>
   );
@@ -85,36 +89,48 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 80,
   },
-  settingButton: {
-    position: "absolute",
-    top: 60,
-    right: 24,
-  },
-  settingIcon: {
-    fontSize: 22,
-    color: "#444",
-  },
+
+  // 👤 프로필 카드
   profileCard: {
-    flexDirection: "row",
-    alignItems: "center",
+    position: "relative",
     backgroundColor: "#DCE8F9",
-    padding: 18,
     borderRadius: 12,
     width: "85%",
+    padding: 18,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     marginBottom: 50,
   },
+
+  profileInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
   profileImage: {
     width: 64,
     height: 64,
     borderRadius: 32,
     marginRight: 12,
   },
+
+  settingButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+  },
+
+  settingIcon: {
+    fontSize: 22,
+    color: "#444",
+  },
+
   userId: { fontSize: 13, color: "#333" },
   userName: { fontSize: 15, fontWeight: "600", color: "#111" },
 
+  // 📋 메뉴 영역
   menuSection: {
     width: "85%",
   },
@@ -131,6 +147,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+
+  // 🎨 배경 데코
   decoration: {
     position: "absolute",
     width: 50,
