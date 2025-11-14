@@ -36,29 +36,32 @@ export default function Home() {
   return (
     <View style={styles.container}>
       
-      {/* ⭐ 상단 출석/ streak 카드 영역 */}
+      {/* 🔥 상단: 프로필 + 출석 카드 */}
       <View style={styles.streakCard}>
-
-        {/* 🔸 프로필 아이콘 / 날짜 / 연속학습 표시 / 우측 화살표 */}
+        {/* 상단: 프로필 + 이름 + 날짜 + 화살표 */}
         <View style={styles.topRow}>
-
-          {/* 프로필 아이콘 → 누르면 /my 페이지로 이동 */}
+          
+          {/* 프로필 아이콘 */}
           <Link href="/my" asChild>
-            {/* asChild 는 TouchableOpacity가 실제 clickable 요소가 되게 함 */}
             <TouchableOpacity>
               <Image
                 source={require("../assets/images/basic_profile.png")}
                 style={styles.profileIcon}
               />
-
             </TouchableOpacity>
           </Link>
 
-          {/* 날짜 + 연속 학습 텍스트 */}
-          <View style={styles.dateSection}>
-            <Text style={styles.todayDate}>{formattedDate}</Text>
+          {/* 날짜/이름/연속일 텍스트 영역 */}
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            {/* 이름 추가 */}
+            <Text style={{ marginLeft: 5, fontSize: 16, fontWeight: "700", color: "#222" }}>
+              한입기사님
+            </Text>
 
-            {/* 🔥 연속 학습 표시 */}
+            {/* 오늘 날짜 */}
+            <Text style={[styles.todayDate, { marginLeft: 5 }]}>{formattedDate}</Text>
+
+            {/* 연속일자 */}
             <View style={styles.streakRow}>
               <Text style={styles.fireEmoji}>🔥</Text>
               <Text style={styles.streakText}>
@@ -67,41 +70,31 @@ export default function Home() {
             </View>
           </View>
 
-          {/* 오른쪽 화살표 (추후 기능용) */}
+          {/* 우측 화살표 */}
           <Link href="/report" asChild>
             <TouchableOpacity>
               <Text style={styles.nextArrow}>›</Text>
             </TouchableOpacity>
           </Link>
-
         </View>
 
-        {/* 📅 주간 달력 영역 */}
+        {/* 🗓 주간 달력 — 요일 순서 변경 */}
         <View style={styles.weekRow}>
-          {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
+          {["월", "화", "수", "목", "금", "토", "일"].map((day, i) => (
             <View
               key={i}
               style={[
                 styles.dayCircle,
-
-                // 🔸 1~3요일 활성 (데모용)  
-                i >= 1 && i <= 3
-                  ? styles.activeDay
-
-                  // 🔸 오늘 날짜는 하이라이트 강조
-                  : i === today.getDay()
+                // i가 오늘 요일과 일치하면 강조
+                (i + 1) % 7 === today.getDay()
                   ? styles.todayDay
-
-                  // 🔸 그 외 날짜는 비활성
-                  : styles.inactiveDay,
+                  : styles.inactiveDay
               ]}
             >
               <Text
                 style={[
                   styles.dayText,
-                  i >= 1 && i <= 3
-                    ? styles.activeText
-                    : i === today.getDay()
+                  (i + 1) % 7 === today.getDay()
                     ? styles.todayText
                     : styles.inactiveText,
                 ]}
@@ -112,6 +105,7 @@ export default function Home() {
           ))}
         </View>
       </View>
+
 
 
       {/* ⭐ 뉴스/기사 목록 – 가로 슬라이드 캐러셀 */}
