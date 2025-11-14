@@ -12,7 +12,7 @@ export default function ArticleList() {
   return (
     // 전체 화면이 스크롤 가능하도록 ScrollView 사용
     <ScrollView
-      style={{ flex: 1, backgroundColor: "#F7F3EA" }}
+      style={{ flex: 1 }}
       contentContainerStyle={{ padding: 20 }}
     >
       {/* 페이지 제목 */}

@@ -57,45 +57,6 @@ export default function MyPage() {
           <Text style={styles.menuText}>틀린 문제 보기</Text>
         </TouchableOpacity>
       </View>
-
-      {/* -----------------------------------------------------
-           🎨 배경 데코 이미지들 (반투명 피자·햄버거 등)
-           → purely decorative UI 요소
-         ----------------------------------------------------- */}
-      <Image
-        source={require("../../assets/pizza/pep.png")}
-        style={[styles.decoration, { top: 100, left: 30 }]}
-      />
-
-      <Image
-        source={require("../../assets/food/burger.png")}
-        style={[styles.decoration, { top: 200, left: 600 }]}
-      />
-
-      <Image
-        source={require("../../assets/food/potato.png")}
-        style={[styles.decoration, { top: 150, right: 60 }]}
-      />
-
-      <Image
-        source={require("../../assets/pizza/mar.png")}
-        style={[styles.decoration, { top: 600, right: 100 }]}
-      />
-
-      <Image
-        source={require("../../assets/food/ckin.png")}
-        style={[styles.decoration, { top: 700, left: 300 }]}
-      />
-
-      <Image
-        source={require("../../assets/food/chic.png")}
-        style={[styles.decoration, { bottom: 150, right: 250 }]}
-      />
-
-      <Image
-        source={require("../../assets/pizza/hwaa.png")}
-        style={[styles.decoration, { bottom: 60, right: 500 }]}
-      />
     </View>
   );
 }
@@ -106,8 +67,7 @@ export default function MyPage() {
 // -----------------------------------------------------
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: "#F7FAFF",   // 전체 페이지 기본 배경
+    flex: 1,   // 전체 페이지 기본 배경
     alignItems: "center",
     paddingTop: 80,               // 상단 여백
   },
