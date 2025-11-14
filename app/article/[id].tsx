@@ -412,6 +412,7 @@ const styles = StyleSheet.create({
     height: 36,
     marginRight: 10,
   },
+  
   explanationBox: {
     flex: 1,
     backgroundColor: "#daedffff",
@@ -425,3 +426,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+
