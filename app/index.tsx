@@ -1,8 +1,10 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { Link } from "expo-router";
+import { Link } from "expo-router"; 
+// → Link는 웹의 <a>처럼 특정 라우트로 이동하게 해주는 expo-router 의 네비게이션 컴포넌트
+
 
 export default function Home() {
-  // 오늘 날짜 자동 표시
+  // 📌 현재 날짜를 한국 형식으로 변환 (xxxx.xx.xx (요일))
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -11,7 +13,8 @@ export default function Home() {
     weekday: "short",
   });
 
-  // 📰 더미 기사 데이터
+  // 📌 화면에 표시할 더미 기사 데이터
+  // 나중에 실제 API 연동 시 서버에서 받아온 데이터로 대체 가능
   const articles = [
     {
       id: 1,
@@ -32,23 +35,30 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {/* 🔥 상단: 프로필 + 출석 카드 */}
+      
+      {/* ⭐ 상단 출석/ streak 카드 영역 */}
       <View style={styles.streakCard}>
-        {/* 상단: 프로필 + 날짜 + 화살표 */}
+
+        {/* 🔸 프로필 아이콘 / 날짜 / 연속학습 표시 / 우측 화살표 */}
         <View style={styles.topRow}>
+
+          {/* 프로필 아이콘 → 누르면 /my 페이지로 이동 */}
           <Link href="/my" asChild>
+            {/* asChild 는 TouchableOpacity가 실제 clickable 요소가 되게 함 */}
             <TouchableOpacity>
               <Image
-                source={{
-                  uri: "https://cdn-icons-png.flaticon.com/512/847/847969.png",
-                }}
+                source={require("../assets/images/basic_profile.png")}
                 style={styles.profileIcon}
               />
+
             </TouchableOpacity>
           </Link>
 
+          {/* 날짜 + 연속 학습 텍스트 */}
           <View style={styles.dateSection}>
             <Text style={styles.todayDate}>{formattedDate}</Text>
+
+            {/* 🔥 연속 학습 표시 */}
             <View style={styles.streakRow}>
               <Text style={styles.fireEmoji}>🔥</Text>
               <Text style={styles.streakText}>
@@ -57,22 +67,32 @@ export default function Home() {
             </View>
           </View>
 
-          <TouchableOpacity>
-            <Text style={styles.nextArrow}>›</Text>
-          </TouchableOpacity>
+          {/* 오른쪽 화살표 (추후 기능용) */}
+          <Link href="/report" asChild>
+            <TouchableOpacity>
+              <Text style={styles.nextArrow}>›</Text>
+            </TouchableOpacity>
+          </Link>
+
         </View>
 
-        {/* 🗓 주간 달력 */}
+        {/* 📅 주간 달력 영역 */}
         <View style={styles.weekRow}>
           {["일", "월", "화", "수", "목", "금", "토"].map((day, i) => (
             <View
               key={i}
               style={[
                 styles.dayCircle,
+
+                // 🔸 1~3요일 활성 (데모용)  
                 i >= 1 && i <= 3
                   ? styles.activeDay
+
+                  // 🔸 오늘 날짜는 하이라이트 강조
                   : i === today.getDay()
                   ? styles.todayDay
+
+                  // 🔸 그 외 날짜는 비활성
                   : styles.inactiveDay,
               ]}
             >
@@ -93,24 +113,33 @@ export default function Home() {
         </View>
       </View>
 
-      {/* 📰 기사 리스트 (가로 스와이프 캐러셀) */}
+
+      {/* ⭐ 뉴스/기사 목록 – 가로 슬라이드 캐러셀 */}
       <View style={styles.articleSection}>
         <Text style={styles.articleTitle}>오늘의 기사</Text>
+
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
-          pagingEnabled
+          showsHorizontalScrollIndicator={false}  // 아래 스크롤바 숨김
+          pagingEnabled                          // 한 카드씩 스와이프 되게 만듦
           contentContainerStyle={styles.articleScroll}
         >
           {articles.map((article) => (
             <View key={article.id} style={styles.articleCard}>
+              
+              {/* 기사 제목 */}
               <Text style={styles.articleHeader}>{article.title}</Text>
+
+              {/* 요약 문구 */}
               <Text style={styles.articleSummary}>{article.summary}</Text>
+
+              {/* 상세 보기 버튼 → /article/[id] 로 이동 */}
               <Link href={`/article/${article.id}`} asChild>
                 <TouchableOpacity style={styles.readBtn}>
                   <Text style={styles.readBtnText}>자세히 보기</Text>
                 </TouchableOpacity>
               </Link>
+
             </View>
           ))}
         </ScrollView>
@@ -119,18 +148,23 @@ export default function Home() {
   );
 }
 
+
+// ---------------------------------------
+// 📌 스타일 정의
+// ---------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F7F3EA",
-    paddingTop: 50,
+    paddingTop: 50, // 화면 상단 여백
   },
+
   fireEmoji: {
     fontSize: 20,
     marginRight: 6,
   },
 
-
+  // ⭐ streak(출석) 카드 스타일
   streakCard: {
     backgroundColor: "#fff7e6",
     borderRadius: 20,
@@ -170,12 +204,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  fireIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 6,
-  },
-
   streakText: {
     fontSize: 15,
     color: "#333",
@@ -187,6 +215,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
+  // 🔹 달력
   weekRow: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -215,7 +244,7 @@ const styles = StyleSheet.create({
   todayText: { color: "#fff", fontWeight: "700" },
   inactiveText: { color: "#999" },
 
-  // 📰 기사 섹션
+  // ⭐ 기사 영역
   articleSection: {
     marginTop: 40,
   },
@@ -226,9 +255,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#333",
   },
+
   articleScroll: {
     paddingHorizontal: 16,
   },
+
   articleCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -239,18 +270,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
+
   articleHeader: {
     fontSize: 17,
     fontWeight: "700",
     color: "#222",
     marginBottom: 8,
   },
+
   articleSummary: {
     fontSize: 14,
     color: "#555",
     marginBottom: 16,
     lineHeight: 20,
   },
+
   readBtn: {
     alignSelf: "flex-end",
     backgroundColor: "#222",
@@ -258,9 +292,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
   },
+
   readBtnText: {
     color: "#fff",
     fontWeight: "600",
   },
 });
-
