@@ -5,147 +5,307 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  Pressable,
+  Image,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-// useLocalSearchParams → 현재 페이지의 [id] 값을 가져오는 hook
-// useRouter → 다른 페이지로 이동(push 등) 할 때 사용
 
+
+// ------------------------------------------------------
+// 🔥 상단 탭바
+// ------------------------------------------------------
+function ArticleTabBar({ activeTab, setActiveTab, goHome }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderColor: "#ddd",
+        backgroundColor: "white",
+      }}
+    >
+      {/* 홈으로 돌아가기 */}
+      <TouchableOpacity onPress={goHome} style={{ paddingHorizontal: 16 }}>
+        <Text style={{ fontSize: 20 }}>{"<"}</Text>
+      </TouchableOpacity>
+
+      {/* 탭 4개 */}
+      {["기사", "요약", "키워드", "퀴즈"].map((tabName) => (
+        <TouchableOpacity
+          key={tabName}
+          onPress={() => setActiveTab(tabName)}
+          style={{ paddingHorizontal: 16 }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: activeTab === tabName ? "700" : "400",
+              color: activeTab === tabName ? "#222" : "#777",
+            }}
+          >
+            {tabName}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+
+
+// ------------------------------------------------------
+// 🔥 기사 상세 메인 페이지
+// ------------------------------------------------------
 export default function ArticleDetail() {
   const router = useRouter();
-
-  // URL 에서 /article/[id] 형태로 들어온 id 값을 받음
-  // 예: 사용자가 /article/3 으로 들어오면 id = "3"
   const { id } = useLocalSearchParams();
 
-  // "요약 보기" 모달 on/off 상태
-  const [modalVisible, setModalVisible] = useState(false);
+  // 🔥 탭 상태
+  const [activeTab, setActiveTab] = useState("기사");
 
-  // 실제 API 연동 전, 구조를 잡기 위한 더미 데이터
-  // 나중에 fetch로 서버에서 데이터 가져와 대체하면 됨.
+  // 🔥 퀴즈 상태 (기존 quiz/[id].tsx에서 가져온 상태)
+  const [selected, setSelected] = useState({});
+  const [isGraded, setIsGraded] = useState({});
+  const [isOpen, setIsOpen] = useState({});
+
+  // 🔥 더미 기사 데이터
   const dummyArticle = {
     id,
     category: "AI / 데이터",
     title: "AI & 데이터 서밋 2025, 기업의 새로운 전환점",
     date: "2025.10.20",
     source: "한입경제",
-    summary: "AI 기술의 확산과 데이터 기반 혁신이 기업 경쟁력을 좌우한다는 분석.",
+    summary:
+      "AI 기술의 확산과 데이터 기반 혁신이 기업 경쟁력을 좌우한다는 분석.",
     keywords: ["AI", "데이터", "산업혁신", "비즈니스"],
-
-    // 본문 일부 (여기도 원래 서버 데이터 들어갈 부분)
     content: `AI & 데이터 서밋 2025에서는 AI의 산업적 확산과 데이터 활용 전략이 주요 의제로 다뤄졌습니다. 
 기업들은 AI를 통한 자동화, 맞춤형 서비스, 데이터 기반 의사결정 강화에 주목하고 있습니다.`,
   };
 
+  // 🔥 퀴즈 데이터
+  const quizList = [
+    {
+      question: "Q1. 'AI & 데이터 서밋 2025'의 주요 의제는?",
+      options: [
+        "AI 도입 전략과 데이터 활용",
+        "패션 산업 트렌드",
+        "해양 생태계 보호",
+        "스포츠 과학 기술",
+      ],
+      answer: 0,
+      explanation:
+        "AI & 데이터 서밋 2025에서는 AI와 데이터 전략, 인프라 혁신 등이 논의되었습니다.",
+    },
+    {
+      question: "Q2. 한입기사의 주요 기능은?",
+      options: ["뉴스 요약 제공", "음악 재생", "지도 탐색", "게임 제공"],
+      answer: 0,
+      explanation:
+        "한입기사는 사용자가 빠르게 뉴스를 요약해 볼 수 있도록 하는 서비스입니다.",
+    },
+  ];
+
+  // 🔥 퀴즈 로직
+  const handleSelect = (qIndex, oIndex) => {
+    setSelected((prev) => ({ ...prev, [qIndex]: oIndex }));
+  };
+
+  const handleGrade = (qIndex) => {
+    setIsGraded((prev) => ({ ...prev, [qIndex]: true }));
+    setIsOpen((prev) => ({ ...prev, [qIndex]: true }));
+  };
+
+  const toggleOpen = (qIndex) => {
+    setIsOpen((prev) => ({ ...prev, [qIndex]: !prev[qIndex] }));
+  };
+
+
+
   return (
-    <View style={styles.container}>
-      {/* 전체 내용 스크롤 가능 */}
-      <ScrollView contentContainerStyle={styles.scroll}>
+    <View style={{ flex: 1, backgroundColor: "#F7F3EA" }}>
+      {/* 상단 탭바 */}
+      <ArticleTabBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        goHome={() => router.push("/")}
+      />
 
-        {/* 🧭 카테고리 표시 */}
-        <Text style={styles.category}>{dummyArticle.category}</Text>
 
-        {/* 📰 제목 + 요약 모달 버튼 */}
-        <View style={styles.headerRow}>
-          {/* 기사 제목 */}
-          <Text style={styles.title}>{dummyArticle.title}</Text>
 
-          {/* "🤖 요약 보기" 버튼 → 모달 on */}
-          <TouchableOpacity
-            style={styles.summaryBtn}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.summaryText}>🤖 요약 보기</Text>
-          </TouchableOpacity>
+      {/* -------------------------------------------------- */}
+      {/* 🔥 1) 기사 탭 */}
+      {/* -------------------------------------------------- */}
+      {activeTab === "기사" && (
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <Text style={styles.category}>{dummyArticle.category}</Text>
+
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>{dummyArticle.title}</Text>
+          </View>
+
+          <Text style={styles.meta}>
+            {dummyArticle.date} · {dummyArticle.source}
+          </Text>
+
+          <View style={styles.keywords}>
+            {dummyArticle.keywords.map((kw, idx) => (
+              <View key={idx} style={styles.tag}>
+                <Text style={styles.tagText}>#{kw}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={styles.content}>{dummyArticle.content}</Text>
+        </ScrollView>
+      )}
+
+
+
+      {/* -------------------------------------------------- */}
+      {/* 🔥 2) 요약 탭 */}
+      {/* -------------------------------------------------- */}
+      {activeTab === "요약" && (
+        <View style={{ padding: 20 }}>
+          <Text style={styles.tabTitle}>🤖 AI 요약</Text>
+          <Text style={styles.tabContent}>{dummyArticle.summary}</Text>
         </View>
+      )}
 
-        {/* 날짜 + 출처 */}
-        <Text style={styles.meta}>
-          {dummyArticle.date} · {dummyArticle.source}
-        </Text>
 
-        {/* 🏷️ 키워드 해시태그 */}
-        <View style={styles.keywords}>
-          {dummyArticle.keywords.map((kw, idx) => (
-            <TouchableOpacity key={idx} style={styles.tag}>
-              <Text style={styles.tagText}>#{kw}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
-        {/* 📄 본문 */}
-        <Text style={styles.content}>{dummyArticle.content}</Text>
-      </ScrollView>
+      {/* -------------------------------------------------- */}
+      {/* 🔥 3) 키워드 탭 */}
+      {/* -------------------------------------------------- */}
+      {activeTab === "키워드" && (
+        <View style={{ padding: 20 }}>
+          <Text style={styles.tabTitle}>🔖 관련 키워드</Text>
 
-      {/* 🧠 퀴즈 풀러가기 (하단 고정 버튼) */}
-      <TouchableOpacity
-        style={styles.quizButton}
-        onPress={() => router.push(`/quiz/${dummyArticle.id}`)}
-        // → 현재 기사 ID에 맞는 퀴즈 화면으로 이동
-      >
-        <Text style={styles.quizText}>🧠 퀴즈 풀러가기</Text>
-      </TouchableOpacity>
-
-      {/* 🤖 AI 요약 모달 */}
-      <Modal
-        transparent={true}            // 배경을 흐리게 보이도록
-        visible={modalVisible}        // 모달 열림 여부
-        animationType="fade"          // 서서히 나타나는 효과
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-
-            <Text style={styles.modalTitle}>🤖 AI 요약</Text>
-            <Text style={styles.modalContent}>{dummyArticle.summary}</Text>
-
-            {/* 닫기 버튼 */}
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeText}>닫기</Text>
-            </Pressable>
-
+          <View style={styles.keywordList}>
+            {dummyArticle.keywords.map((kw, idx) => (
+              <View key={idx} style={styles.keywordItem}>
+                <Text style={{ fontSize: 16 }}>#{kw}</Text>
+              </View>
+            ))}
           </View>
         </View>
-      </Modal>
+      )}
+
+
+
+      {/* -------------------------------------------------- */}
+      {/* 🔥 4) 퀴즈 탭 (기존 quiz/[id].tsx 전체 이식) */}
+      {/* -------------------------------------------------- */}
+      {activeTab === "퀴즈" && (
+        <ScrollView style={{ padding: 20 }}>
+          <Text style={styles.quizHeader}>🧠 기사 {id} 퀴즈</Text>
+
+          {quizList.map((quiz, qIndex) => {
+            const userAnswer = selected[qIndex];
+            const graded = isGraded[qIndex];
+            const open = isOpen[qIndex];
+            const isCorrect = userAnswer === quiz.answer;
+
+            return (
+              <View key={qIndex} style={styles.quizBlock}>
+                <Text style={styles.question}>{quiz.question}</Text>
+
+                {quiz.options.map((opt, oIndex) => {
+                  const selectedOption = userAnswer === oIndex;
+                  return (
+                    <TouchableOpacity
+                      key={oIndex}
+                      disabled={graded}
+                      onPress={() => handleSelect(qIndex, oIndex)}
+                      style={[
+                        styles.option,
+                        selectedOption && styles.selected,
+                        graded &&
+                          oIndex === quiz.answer && {
+                            backgroundColor: "#DFF5CC",
+                          },
+                        graded &&
+                          selectedOption &&
+                          oIndex !== quiz.answer && {
+                            backgroundColor: "#FDDCDC",
+                          },
+                      ]}
+                    >
+                      <Text style={styles.optionText}>{opt}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <TouchableOpacity
+                  onPress={() => handleGrade(qIndex)}
+                  disabled={graded || selected[qIndex] === undefined}
+                  style={[
+                    styles.gradeBtn,
+                    graded && styles.disabledBtn,
+                    selected[qIndex] === undefined && styles.disabledBtn,
+                  ]}
+                >
+                  <Text style={styles.gradeText}>
+                    {graded ? "채점 완료" : "채점하기"}
+                  </Text>
+                </TouchableOpacity>
+
+                {graded && (
+                  <View style={styles.explanationWrapper}>
+                    <TouchableOpacity onPress={() => toggleOpen(qIndex)}>
+                      <Image
+                        source={
+                          open
+                            ? require("../../assets/icons/toggle_1.png")
+                            : require("../../assets/icons/toggle_2.png")
+                        }
+                        style={styles.pizzaIcon}
+                      />
+                    </TouchableOpacity>
+
+                    {open && (
+                      <View style={styles.explanationBox}>
+                        <Text
+                          style={[
+                            styles.resultText,
+                            { color: isCorrect ? "#2E7D32" : "#C62828" },
+                          ]}
+                        >
+                          {isCorrect ? "🎉 정답입니다!" : "❌ 오답입니다!"}
+                        </Text>
+
+                        <Text style={styles.explanation}>
+                          {quiz.explanation}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 
-// --------------------------------
-// 📌 스타일 정의
-// --------------------------------
+
+// ------------------------------------------------------
+// 🎨 스타일
+// ------------------------------------------------------
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F3EA" },
-
-  // ScrollView 내부 여백
-  scroll: { padding: 20, paddingBottom: 100 },
-
+  scroll: { padding: 20 },
   category: { color: "#666", fontSize: 14, marginBottom: 6 },
 
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
     gap: 10,
   },
 
   title: { flex: 1, fontSize: 20, fontWeight: "700", color: "#222" },
-
-  summaryBtn: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-
-  summaryText: { fontSize: 13, color: "#333" },
 
   meta: { fontSize: 12, color: "#777", marginTop: 4 },
 
@@ -167,59 +327,101 @@ const styles = StyleSheet.create({
 
   content: { fontSize: 15, lineHeight: 22, color: "#333", marginTop: 10 },
 
-  // 하단 고정 버튼
-  quizButton: {
-    position: "absolute",
-    bottom: 20,
-    alignSelf: "center",
-    backgroundColor: "#222",
-    paddingVertical: 12,
-    paddingHorizontal: 60,
-    borderRadius: 30,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-
-  quizText: { color: "white", fontSize: 16, fontWeight: "600" },
-
-  // 모달 배경
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-
-  // 모달 박스
-  modalContainer: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 12,
-    width: "80%",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-  },
-
-  modalTitle: {
-    fontSize: 18,
+  // 요약 / 키워드 탭
+  tabTitle: {
+    fontSize: 20,
     fontWeight: "700",
-    marginBottom: 12,
-    textAlign: "center",
+    marginBottom: 14,
+  },
+  tabContent: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#333",
+  },
+  keywordList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  keywordItem: {
+    backgroundColor: "#fff",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
 
-  modalContent: { fontSize: 15, lineHeight: 22, color: "#333", marginBottom: 16 },
-
-  closeButton: {
-    alignSelf: "center",
+  // 퀴즈
+  quizHeader: {
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  quizBlock: {
+    backgroundColor: "white",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  question: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 14,
+  },
+  option: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: "#fff",
+  },
+  optionText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  selected: {
+    borderColor: "#ff9f00",
+    backgroundColor: "#fff5e0",
+  },
+  gradeBtn: {
+    marginTop: 10,
     backgroundColor: "#222",
-    paddingHorizontal: 24,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
   },
+  gradeText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  disabledBtn: { backgroundColor: "#aaa" },
 
-  closeText: { color: "white", fontSize: 14 },
+  explanationWrapper: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginTop: 12,
+  },
+  pizzaIcon: {
+    width: 36,
+    height: 36,
+    marginRight: 10,
+  },
+  explanationBox: {
+    flex: 1,
+    backgroundColor: "#daedffff",
+    borderRadius: 10,
+    padding: 12,
+  },
+  resultText: { fontWeight: "600", fontSize: 15, marginBottom: 4 },
+  explanation: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
+  },
 });
