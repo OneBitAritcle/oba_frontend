@@ -1,10 +1,24 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
-import { Link } from "expo-router"; 
-// → Link는 웹의 <a>처럼 특정 라우트로 이동하게 해주는 expo-router 의 네비게이션 컴포넌트
+import { useRef, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  Platform ,
+} from "react-native";
+import { Link } from "expo-router";
 
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = 280;
+const SPACING = 20;
+const CENTER_OFFSET = (width - CARD_WIDTH) / 2;
 
 export default function Home() {
-  // 📌 현재 날짜를 한국 형식으로 변환 (xxxx.xx.xx (요일))
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -13,35 +27,142 @@ export default function Home() {
     weekday: "short",
   });
 
-  // 📌 화면에 표시할 더미 기사 데이터
-  // 나중에 실제 API 연동 시 서버에서 받아온 데이터로 대체 가능
   const articles = [
     {
       id: 1,
       title: "AI & 데이터 서밋 2025",
-      summary: "AI 전략과 데이터 기반 혁신이 산업 경쟁력을 결정한다는 분석.",
+      bullets: [
+        "AI 산업 확산 전략 공개",
+        "데이터 기반 의사결정 중요성 강조",
+        "기업 경쟁력의 핵심 요소로 부상",
+        "AI 인프라 투자 계획 대폭 확대",
+        "글로벌 기술 표준 협의 논의",
+      ],
     },
     {
       id: 2,
       title: "테슬라, 자율주행 완전 상용화 선언",
-      summary: "일부 지역에서 자율주행 차량을 완전 개방하며 시장 반응이 뜨겁다.",
+      bullets: [
+        "FSD 완전자율주행 일부 지역 개방",
+        "운전자 개입률 대폭 감소 발표",
+        "도로 데이터 수집 규모 확대",
+        "규제기관과 안전성 검증 진행 중",
+        "글로벌 서비스 확장 계획 표명",
+      ],
     },
     {
       id: 3,
       title: "메타버스 2.0 시대 개막",
-      summary: "현실 경제와 디지털 세상이 융합되는 새로운 메타버스 플랫폼이 공개되었다.",
+      bullets: [
+        "현실 경제와 디지털 융합 가속화",
+        "새로운 메타버스 플랫폼 공개",
+        "콘텐츠 제작 생태계 확대",
+        "기업들의 가상 오피스 도입 증가",
+        "차세대 디지털 거버넌스 논의",
+      ],
+    },
+    {
+      id: 4,
+      title: "메타, 차세대 메타버스 비전 발표",
+      bullets: [
+        "가상 플랫폼 기능 대폭 업그레이드",
+        "AI 기반 상호작용 기능 강화",
+        "창작자 지원 프로그램 확대",
+        "글로벌 파트너십 체결",
+        "교육·업무용 기능 개선",
+      ],
+    },
+    {
+      id: 5,
+      title: "메타버스 플랫폼 경쟁 본격화",
+      bullets: [
+        "대형 IT 기업들의 플랫폼 전쟁",
+        "사용자 기반 성장 경쟁 심화",
+        "XR 기술 활용 폭발적 증가",
+        "콘텐츠 시장 규모 급성장",
+        "자율 경제 시스템 도입 확산",
+      ],
     },
   ];
 
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // loop를 위해 앞뒤에 카드 추가
+  const loopData = [
+    articles[articles.length - 1],
+    ...articles,
+    articles[0],
+  ];
+
+  const onScrollEnd = (e) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const index = Math.round(x / (CARD_WIDTH + SPACING)) - 1;
+
+    let realIndex = index;
+    if (index === -1) realIndex = articles.length - 1;
+    else if (index === articles.length) realIndex = 0;
+
+    setActiveIndex(realIndex);
+  };
+
+  // 카드 컴포넌트
+  const ArticleCard = ({ item, index }) => {
+    const inputRange = [
+      (index - 2) * (CARD_WIDTH + SPACING),
+      (index - 1) * (CARD_WIDTH + SPACING),
+      index * (CARD_WIDTH + SPACING),
+    ];
+
+    const scale = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.85, 1, 0.85],
+    });
+
+    const opacity = scrollX.interpolate({
+      inputRange,
+      outputRange: [0.4, 1, 0.4],
+    });
+
+    const rotateY = scrollX.interpolate({
+      inputRange,
+      outputRange: ["20deg", "0deg", "-20deg"],
+      extrapolate: "clamp",
+    });
+
+    return (
+      <Link href={`/article/${item.id}`} asChild>
+        <Pressable>
+          <Animated.View
+            style={[
+              styles.articleCard,
+              {
+                transform: [{ scale }, { rotateY }],
+                opacity,
+              },
+            ]}
+          >
+            <Text style={styles.articleHeader}>{item.title}</Text>
+
+            <View style={{ marginVertical: 10 }}>
+              {item.bullets.map((b, idx) => (
+                <View key={idx} style={{ flexDirection: "row", marginBottom: 4 }}>
+                  <Text style={{ fontSize: 12, marginRight: 6 }}>•</Text>
+                  <Text style={{ fontSize: 13, flex: 1 }}>{b}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        </Pressable>
+      </Link>
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      
-      {/* 🔥 상단: 프로필 + 출석 카드 */}
+    <View style={{ flex: 1, paddingTop: 50 }}>
+      {/* 유저 카드 (그대로 유지) */}
       <View style={styles.streakCard}>
-        {/* 상단: 프로필 + 이름 + 날짜 + 화살표 */}
         <View style={styles.topRow}>
-          
-          {/* 프로필 아이콘 */}
           <Link href="/my" asChild>
             <TouchableOpacity>
               <Image
@@ -51,196 +172,71 @@ export default function Home() {
             </TouchableOpacity>
           </Link>
 
-          {/* 날짜/이름/연속일 텍스트 영역 */}
           <View style={{ flex: 1, marginLeft: 10 }}>
-            {/* 이름 추가 */}
-            <Text style={{ marginLeft: 5, fontSize: 16, fontWeight: "700", color: "#222" }}>
+            <Text style={{ fontSize: 16, fontWeight: "700", color: "#222" }}>
               한입기사님
             </Text>
+            <Text style={{ fontSize: 14, color: "#555" }}>{formattedDate}</Text>
 
-            {/* 오늘 날짜 */}
-            <Text style={[styles.todayDate, { marginLeft: 5 }]}>{formattedDate}</Text>
-
-            {/* 연속일자 */}
             <View style={styles.streakRow}>
               <Text style={styles.fireEmoji}>🔥</Text>
-              <Text style={styles.streakText}>
-                연속 학습 <Text style={{ fontWeight: "700" }}>5</Text>일
-              </Text>
+              <Text style={styles.streakText}>연속 학습 5일</Text>
             </View>
           </View>
-
-          {/* 우측 화살표 */}
-          <Link href="/report" asChild>
-            <TouchableOpacity>
-              <Text style={styles.nextArrow}>›</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-
-        {/* 🗓 주간 달력 — 요일 순서 변경 */}
-        <View style={styles.weekRow}>
-          {["월", "화", "수", "목", "금", "토", "일"].map((day, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dayCircle,
-                // i가 오늘 요일과 일치하면 강조
-                (i + 1) % 7 === today.getDay()
-                  ? styles.todayDay
-                  : styles.inactiveDay
-              ]}
-            >
-              <Text
-                style={[
-                  styles.dayText,
-                  (i + 1) % 7 === today.getDay()
-                    ? styles.todayText
-                    : styles.inactiveText,
-                ]}
-              >
-                {day}
-              </Text>
-            </View>
-          ))}
         </View>
       </View>
 
-
-
-      {/* ⭐ 뉴스/기사 목록 – 가로 슬라이드 캐러셀 */}
-      <View style={styles.articleSection}>
+      {/* 기사 캐러셀 */}
+      <View style={{ marginTop: 40 }}>
         <Text style={styles.articleTitle}>오늘의 기사</Text>
 
-        <ScrollView
+        <Animated.ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}  // 아래 스크롤바 숨김
-          pagingEnabled                          // 한 카드씩 스와이프 되게 만듦
-          contentContainerStyle={styles.articleScroll}
+          snapToInterval={CARD_WIDTH + SPACING}
+          decelerationRate="fast"
+          scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingHorizontal: CENTER_OFFSET,
+          }}
+          
+          // ⭐ 플랫폼별 스크롤바 제어
+          showsHorizontalScrollIndicator={Platform.OS === "web"}
+
+          // ⭐ 웹에서만 overflow scroll 강제
+          style={
+            Platform.OS === "web"
+              ? { overflowX: "scroll", overflowY: "hidden" }
+              : {}
+          }
+
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true }
+          )}
+          onMomentumScrollEnd={onScrollEnd}
         >
-          {articles.map((article) => (
-            <View key={article.id} style={styles.articleCard}>
-              
-              {/* 기사 제목 */}
-              <Text style={styles.articleHeader}>{article.title}</Text>
-
-              {/* 요약 문구 */}
-              <Text style={styles.articleSummary}>{article.summary}</Text>
-
-              {/* 상세 보기 버튼 → /article/[id] 로 이동 */}
-              <Link href={`/article/${article.id}`} asChild>
-                <TouchableOpacity style={styles.readBtn}>
-                  <Text style={styles.readBtnText}>자세히 보기</Text>
-                </TouchableOpacity>
-              </Link>
-
-            </View>
+          {loopData.map((item, index) => (
+            <ArticleCard key={index} item={item} index={index} />
           ))}
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
     </View>
   );
 }
 
-
-// ---------------------------------------
-// 📌 스타일 정의
-// ---------------------------------------
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 50, // 화면 상단 여백
-  },
-
-  fireEmoji: {
-    fontSize: 20,
-    marginRight: 6,
-  },
-
-  // ⭐ streak(출석) 카드 스타일
   streakCard: {
     backgroundColor: "#fff7e6",
-    borderRadius: 20,
     marginHorizontal: 16,
     padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    borderRadius: 20,
   },
+  topRow: { flexDirection: "row", alignItems: "center" },
+  profileIcon: { width: 42, height: 42, borderRadius: 21 },
+  streakRow: { flexDirection: "row", alignItems: "center" },
+  fireEmoji: { fontSize: 20, marginRight: 6 },
+  streakText: { fontSize: 15, color: "#333" },
 
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-
-  profileIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-  },
-
-  dateSection: {
-    flex: 1,
-    marginLeft: 10,
-  },
-
-  todayDate: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 4,
-  },
-
-  streakRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  streakText: {
-    fontSize: 15,
-    color: "#333",
-  },
-
-  nextArrow: {
-    fontSize: 22,
-    color: "#999",
-    fontWeight: "600",
-  },
-
-  // 🔹 달력
-  weekRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    marginTop: 4,
-  },
-
-  dayCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  activeDay: { backgroundColor: "#ffe58f" },
-  todayDay: {
-    backgroundColor: "#ffd666",
-    borderWidth: 2,
-    borderColor: "#ff9f00",
-  },
-  inactiveDay: { backgroundColor: "#f0f0f0" },
-
-  dayText: { fontSize: 15 },
-  activeText: { color: "#c47f00", fontWeight: "600" },
-  todayText: { color: "#fff", fontWeight: "700" },
-  inactiveText: { color: "#999" },
-
-  // ⭐ 기사 영역
-  articleSection: {
-    marginTop: 40,
-  },
   articleTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -249,45 +245,40 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 
-  articleScroll: {
-    paddingHorizontal: 16,
-  },
-
   articleCard: {
+    width: CARD_WIDTH,
+    marginRight: SPACING,
     backgroundColor: "#fff",
     borderRadius: 16,
-    width: 280,
     padding: 20,
-    marginRight: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
 
   articleHeader: {
     fontSize: 17,
     fontWeight: "700",
     color: "#222",
-    marginBottom: 8,
+    marginBottom: 10,
   },
 
-  articleSummary: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 16,
-    lineHeight: 20,
+  indicatorWrap: {
+    marginTop: 12,
+    flexDirection: "row",
+    justifyContent: "center",
   },
 
-  readBtn: {
-    alignSelf: "flex-end",
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ccc",
+    marginHorizontal: 4,
+  },
+
+  activeDot: {
     backgroundColor: "#222",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-
-  readBtnText: {
-    color: "#fff",
-    fontWeight: "600",
+    width: 18,
   },
 });

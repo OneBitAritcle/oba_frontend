@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 
 export default function ArticleTab({ article }) {
   return (
@@ -20,7 +20,7 @@ export default function ArticleTab({ article }) {
       <View style={styles.keywords}>
         {article.keywords.map((kw, idx) => (
           <View key={idx} style={styles.tag}>
-            <Text style={styles.tagText}>#{kw}</Text>
+            <Text style={styles.tagText}>#{kw.word}</Text>
           </View>
         ))}
       </View>

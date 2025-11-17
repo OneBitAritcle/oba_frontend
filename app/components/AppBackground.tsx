@@ -5,60 +5,49 @@ export default function AppBackground() {
     <View
       style={[
         StyleSheet.absoluteFill,
-        { backgroundColor: "#F5FAFF" }
+        { position: "absolute", backgroundColor: "#F5FAFF" }
       ]}
       pointerEvents="none"
     >
-
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: 100,
-          height: 100,
-          backgroundColor: "red",
-          zIndex: 999,
-        }}
-      />
-
       <Image
         source={require("../../assets/pizza/pep.png")}
-        style={[styles.decoration, { top: 80, left: 20 }]}
+        style={[styles.decoration, { top: 80, left: 140 }]}
       />
 
       <Image
         source={require("../../assets/food/burger.png")}
-        style={[styles.decoration, { top: 200, right: 20 }]}
+        style={[styles.decoration, { top: 180, right: 90, transform: [{ rotate: "-12deg" }], }]}
       />
 
       <Image
         source={require("../../assets/food/potato.png")}
-        style={[styles.decoration, { top: 350, left: 30 }]}
+        style={[styles.decoration, { top: 330, left: 60 , transform: [{ rotate: "-12deg" }],}]}
       />
 
       <Image
         source={require("../../assets/pizza/mar.png")}
-        style={[styles.decoration, { top: 500, right: 30 }]}
+        style={[styles.decoration, { top: 460, right: 180 , transform: [{ rotate: "12deg" }],}]}
       />
 
       <Image
         source={require("../../assets/food/ckin.png")}
-        style={[styles.decoration, { top: 650, left: 70 }]}
+        style={[styles.decoration, { top: 620, left: 180, transform: [{ rotate: "16deg" }], }]}
       />
 
       <Image
         source={require("../../assets/food/chic.png")}
-        style={[styles.decoration, { bottom: 140, right: 40 }]}
+        style={[styles.decoration, { top: 720, right: 120 }]}
       />
 
       <Image
         source={require("../../assets/pizza/hwaa.png")}
-        style={[styles.decoration, { bottom: 30, left: 60 }]}
+        style={[styles.decoration, { bottom: 150, left: 100 }]}
       />
     </View>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   decoration: {

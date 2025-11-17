@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 
 export default function QuizTab({
   quizList,
@@ -10,7 +10,10 @@ export default function QuizTab({
   toggleOpen,
 }) {
   return (
-    <View style={styles.container}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ padding: 20, paddingBottom: 80 }}
+    >
       <Text style={styles.header}>🧠 퀴즈</Text>
 
       {quizList.map((quiz, qIndex) => {
@@ -66,7 +69,6 @@ export default function QuizTab({
             {/* 해설 */}
             {graded && (
               <View style={styles.explanationWrapper}>
-                {/* 토글 버튼 */}
                 <TouchableOpacity onPress={() => toggleOpen(qIndex)}>
                   <Image
                     source={
@@ -78,7 +80,6 @@ export default function QuizTab({
                   />
                 </TouchableOpacity>
 
-                {/* 해설 박스 */}
                 {open && (
                   <View style={styles.explanationBox}>
                     <Text
@@ -100,12 +101,12 @@ export default function QuizTab({
           </View>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: { padding: 20 }, // 사용 X (ScrollView에서 padding 처리)
   header: { fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 20 },
 
   quizBlock: {
