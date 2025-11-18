@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# 🚀 한입기사 프론트엔드 실행 가이드 
+## 1️⃣ 프로젝트 클론
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/OneBiteArticle/oba_frontend.git
+cd oba_frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 2️⃣ 필수 패키지 설치
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+(※ `expo-blur` 포함 — 앱 UI 구성에 필요합니다.)
+
+```bash
+npm install
+npx expo install expo-blur
 ```
+
+---
+
+## 3️⃣ 자동 실행 스크립트
+
+### 🪟 Windows
+
+```bash
+setup.bat
+```
+
+더블클릭으로 실행해도 됩니다.
+**Expo CLI 설치 → 패키지 설치 → 앱 실행**이 자동으로 진행됩니다.
+
+---
+
+### 🍎 macOS
+
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+환경 구성부터 앱 실행까지 한 번에 완료됩니다.
+
+---
+
+## 4️⃣ 수동 실행 (원할 때)
+
+자동 스크립트 대신 직접 실행하려면:
+
+```bash
+npm install
+npm start
+npx expo install expo-blur
+```
+
+또는
+
+```bash
+npx expo start
+```
+
+---
+
+## 5️⃣ 실행
+
+터미널에 표시되는 QR 코드를
+스마트폰의 **Expo Go 앱**으로 스캔해 접속합니다.
+
+> PC와 스마트폰이 **같은 Wi-Fi**를 사용해야 접속할 수 있습니다.
