@@ -51,6 +51,7 @@ chmod +x setup.sh
 ```bash
 npm install
 npm start
+npx expo install expo-blur
 ```
 
 또는
