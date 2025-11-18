@@ -1,3 +1,5 @@
+// app/index.tsx
+
 import { useRef, useState } from "react";
 import {
   View,
@@ -7,16 +9,23 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Platform,
   Pressable,
   ScrollView,
-  Platform ,
 } from "react-native";
 import { Link } from "expo-router";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = 280;
-const SPACING = 20;
-const CENTER_OFFSET = (width - CARD_WIDTH) / 2;
+
+// ===============================
+// CONFIG
+// ===============================
+const CARD_WIDTH = width * 0.65;  // 한 장당 65%
+const SIDE_SPACING = (width - CARD_WIDTH * 3) / 2;  // 3장 전체 가운데 배치
+const CARD_SPACING = 10;
+
+// 실제 화면에 카드 3장이 보이도록 Offset 계산
+const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
 
 export default function Home() {
   const today = new Date();
@@ -27,6 +36,9 @@ export default function Home() {
     weekday: "short",
   });
 
+  // =============================
+  // ARTICLE DATA
+  // =============================
   const articles = [
     {
       id: 1,
@@ -34,8 +46,8 @@ export default function Home() {
       bullets: [
         "AI 산업 확산 전략 공개",
         "데이터 기반 의사결정 중요성 강조",
-        "기업 경쟁력의 핵심 요소로 부상",
-        "AI 인프라 투자 계획 대폭 확대",
+        "기업 경쟁력 핵심 요소로 부상",
+        "AI 인프라 투자 계획 확대",
         "글로벌 기술 표준 협의 논의",
       ],
     },
@@ -43,80 +55,103 @@ export default function Home() {
       id: 2,
       title: "테슬라, 자율주행 완전 상용화 선언",
       bullets: [
-        "FSD 완전자율주행 일부 지역 개방",
-        "운전자 개입률 대폭 감소 발표",
-        "도로 데이터 수집 규모 확대",
-        "규제기관과 안전성 검증 진행 중",
-        "글로벌 서비스 확장 계획 표명",
+        "FSD 완전자율 일부 지역 개방",
+        "운전자 개입률 대폭 감소",
+        "도로 데이터 수집 확대",
+        "안전성 검증 진행 중",
+        "글로벌 확장 계획 발표",
       ],
     },
     {
       id: 3,
       title: "메타버스 2.0 시대 개막",
       bullets: [
-        "현실 경제와 디지털 융합 가속화",
-        "새로운 메타버스 플랫폼 공개",
-        "콘텐츠 제작 생태계 확대",
-        "기업들의 가상 오피스 도입 증가",
-        "차세대 디지털 거버넌스 논의",
+        "현실과 디지털 융합 가속화",
+        "차세대 플랫폼 공개",
+        "콘텐츠 생태계 확대",
+        "기업 가상 오피스 도입 증가",
+        "디지털 거버넌스 논의",
       ],
     },
     {
       id: 4,
       title: "메타, 차세대 메타버스 비전 발표",
       bullets: [
-        "가상 플랫폼 기능 대폭 업그레이드",
-        "AI 기반 상호작용 기능 강화",
-        "창작자 지원 프로그램 확대",
-        "글로벌 파트너십 체결",
-        "교육·업무용 기능 개선",
+        "AI 기반 상호작용 강화",
+        "창작자 도구 업그레이드",
+        "파트너십 대규모 체결",
+        "글로벌 시장 확대",
+        "교육/업무용 기능 강화",
       ],
     },
     {
       id: 5,
       title: "메타버스 플랫폼 경쟁 본격화",
       bullets: [
-        "대형 IT 기업들의 플랫폼 전쟁",
-        "사용자 기반 성장 경쟁 심화",
-        "XR 기술 활용 폭발적 증가",
-        "콘텐츠 시장 규모 급성장",
-        "자율 경제 시스템 도입 확산",
+        "대형 플랫폼 경쟁 심화",
+        "사용자 기반 급증",
+        "XR 기술 활용 증가",
+        "콘텐츠 시장 폭발 성장",
+        "자율 경제 시스템 도입",
       ],
     },
   ];
 
-  const scrollX = useRef(new Animated.Value(0)).current;
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // loop를 위해 앞뒤에 카드 추가
+  // Loop용 데이터
   const loopData = [
+    articles[articles.length - 2],
     articles[articles.length - 1],
     ...articles,
     articles[0],
+    articles[1],
   ];
 
-  const onScrollEnd = (e) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const index = Math.round(x / (CARD_WIDTH + SPACING)) - 1;
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef(null);
 
-    let realIndex = index;
-    if (index === -1) realIndex = articles.length - 1;
-    else if (index === articles.length) realIndex = 0;
+  const [index, setIndex] = useState(2); // 중앙 인덱스(루프 보정)
 
-    setActiveIndex(realIndex);
+  // =============================
+  // LOOP 처리
+  // =============================
+  const handleScrollEnd = (e) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    let newIndex = Math.round(offsetX / SNAP_INTERVAL);
+
+    // 루프 앞쪽
+    if (newIndex === 0) {
+      newIndex = articles.length;
+      scrollViewRef.current.scrollTo({
+        x: articles.length * SNAP_INTERVAL,
+        animated: false,
+      });
+    }
+
+    // 루프 뒤쪽
+    if (newIndex === loopData.length - 1) {
+      newIndex = 1;
+      scrollViewRef.current.scrollTo({
+        x: SNAP_INTERVAL,
+        animated: false,
+      });
+    }
+
+    setIndex(newIndex);
   };
 
+  // =============================
   // 카드 컴포넌트
-  const ArticleCard = ({ item, index }) => {
+  // =============================
+  const Card = ({ item, cardIndex }) => {
     const inputRange = [
-      (index - 2) * (CARD_WIDTH + SPACING),
-      (index - 1) * (CARD_WIDTH + SPACING),
-      index * (CARD_WIDTH + SPACING),
+      (cardIndex - 1) * SNAP_INTERVAL,
+      cardIndex * SNAP_INTERVAL,
+      (cardIndex + 1) * SNAP_INTERVAL,
     ];
 
     const scale = scrollX.interpolate({
       inputRange,
-      outputRange: [0.85, 1, 0.85],
+      outputRange: [0.8, 1, 0.8],
     });
 
     const opacity = scrollX.interpolate({
@@ -124,30 +159,24 @@ export default function Home() {
       outputRange: [0.4, 1, 0.4],
     });
 
-    const rotateY = scrollX.interpolate({
-      inputRange,
-      outputRange: ["20deg", "0deg", "-20deg"],
-      extrapolate: "clamp",
-    });
-
     return (
       <Link href={`/article/${item.id}`} asChild>
         <Pressable>
           <Animated.View
             style={[
-              styles.articleCard,
+              styles.card,
               {
-                transform: [{ scale }, { rotateY }],
                 opacity,
+                transform: [{ scale }],
               },
             ]}
           >
-            <Text style={styles.articleHeader}>{item.title}</Text>
+            <Text style={styles.cardTitle}>{item.title}</Text>
 
-            <View style={{ marginVertical: 10 }}>
-              {item.bullets.map((b, idx) => (
-                <View key={idx} style={{ flexDirection: "row", marginBottom: 4 }}>
-                  <Text style={{ fontSize: 12, marginRight: 6 }}>•</Text>
+            <View style={{ marginTop: 10 }}>
+              {item.bullets.map((b, i) => (
+                <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
+                  <Text style={{ marginRight: 6, fontSize: 12 }}>•</Text>
                   <Text style={{ fontSize: 13, flex: 1 }}>{b}</Text>
                 </View>
               ))}
@@ -159,8 +188,8 @@ export default function Home() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: 50 }}>
-      {/* 유저 카드 (그대로 유지) */}
+    <View style={{ flex: 1, paddingTop: 80 }}>
+      {/* 상단 박스 */}
       <View style={styles.streakCard}>
         <View style={styles.topRow}>
           <Link href="/my" asChild>
@@ -172,51 +201,68 @@ export default function Home() {
             </TouchableOpacity>
           </Link>
 
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: "#222" }}>
-              한입기사님
-            </Text>
-            <Text style={{ fontSize: 14, color: "#555" }}>{formattedDate}</Text>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.name}>한입기사님</Text>
+            <Text style={styles.date}>{formattedDate}</Text>
 
             <View style={styles.streakRow}>
               <Text style={styles.fireEmoji}>🔥</Text>
               <Text style={styles.streakText}>연속 학습 5일</Text>
             </View>
           </View>
+
+          <Link href="/report" asChild>
+            <TouchableOpacity>
+              <Text style={styles.goReport}>›</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+
+        {/* 요일 */}
+        <View style={styles.weekRow}>
+          {["월", "화", "수", "목", "금", "토", "일"].map((day, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dayCircle,
+                (i + 1) % 7 === today.getDay() && styles.todayCircle,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.dayText,
+                  (i + 1) % 7 === today.getDay() && styles.todayText,
+                ]}
+              >
+                {day}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
 
-      {/* 기사 캐러셀 */}
+      {/* 기사 3장 캐러셀 */}
       <View style={{ marginTop: 40 }}>
-        <Text style={styles.articleTitle}>오늘의 기사</Text>
+        <Text style={styles.sectionTitle}>오늘의 기사</Text>
 
         <Animated.ScrollView
+          ref={scrollViewRef}
           horizontal
-          snapToInterval={CARD_WIDTH + SPACING}
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={SNAP_INTERVAL}
           decelerationRate="fast"
           scrollEventThrottle={16}
           contentContainerStyle={{
-            paddingHorizontal: CENTER_OFFSET,
+            paddingHorizontal: SIDE_SPACING,
           }}
-          
-          // ⭐ 플랫폼별 스크롤바 제어
-          showsHorizontalScrollIndicator={Platform.OS === "web"}
-
-          // ⭐ 웹에서만 overflow scroll 강제
-          style={
-            Platform.OS === "web"
-              ? { overflowX: "scroll", overflowY: "hidden" }
-              : {}
-          }
-
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
             { useNativeDriver: true }
           )}
-          onMomentumScrollEnd={onScrollEnd}
+          onMomentumScrollEnd={handleScrollEnd}
         >
-          {loopData.map((item, index) => (
-            <ArticleCard key={index} item={item} index={index} />
+          {loopData.map((item, i) => (
+            <Card key={i} item={item} cardIndex={i} />
           ))}
         </Animated.ScrollView>
       </View>
@@ -228,57 +274,82 @@ const styles = StyleSheet.create({
   streakCard: {
     backgroundColor: "#fff7e6",
     marginHorizontal: 16,
-    padding: 16,
+    padding: 20,
     borderRadius: 20,
   },
-  topRow: { flexDirection: "row", alignItems: "center" },
-  profileIcon: { width: 42, height: 42, borderRadius: 21 },
-  streakRow: { flexDirection: "row", alignItems: "center" },
-  fireEmoji: { fontSize: 20, marginRight: 6 },
-  streakText: { fontSize: 15, color: "#333" },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  profileIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#222",
+  },
+  date: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 2,
+  },
+  streakRow: {
+    flexDirection: "row",
+    marginTop: 4,
+    alignItems: "center",
+  },
+  fireEmoji: { fontSize: 20, marginRight: 4 },
+  streakText: { fontSize: 14, color: "#333" },
+  goReport: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#777",
+    marginLeft: 12,
+  },
 
-  articleTitle: {
+  weekRow: {
+    marginTop: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  dayCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  todayCircle: {
+    backgroundColor: "#ffd666",
+  },
+  dayText: { fontSize: 14, color: "#666" },
+  todayText: { color: "#fff", fontWeight: "700" },
+
+  sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginLeft: 24,
-    marginBottom: 12,
+    marginBottom: 16,
     color: "#333",
   },
 
-  articleCard: {
+  card: {
     width: CARD_WIDTH,
-    marginRight: SPACING,
+    marginRight: CARD_SPACING,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 20,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
-
-  articleHeader: {
+  cardTitle: {
     fontSize: 17,
     fontWeight: "700",
     color: "#222",
-    marginBottom: 10,
-  },
-
-  indicatorWrap: {
-    marginTop: 12,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#ccc",
-    marginHorizontal: 4,
-  },
-
-  activeDot: {
-    backgroundColor: "#222",
-    width: 18,
   },
 });

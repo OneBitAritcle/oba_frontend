@@ -1,64 +1,76 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 export default function TabBar({ activeTab, setActiveTab, goHome }) {
   return (
-    <BlurView
-      intensity={25}
-      tint="light"
+    <SafeAreaView
+      edges={["top"]} 
       style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-        borderBottomWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
-        backgroundColor: "rgba(255,255,255,0.35)", // blur + 투명
+        backgroundColor: "transparent",
       }}
     >
-      {/* 뒤로가기 */}
-      <TouchableOpacity onPress={goHome} style={{ paddingHorizontal: 16 }}>
-        <Text style={{ fontSize: 22, fontWeight: "500" }}>{"<"}</Text>
-      </TouchableOpacity>
-
-      {/* 탭 목록 */}
-      {["기사", "요약", "키워드", "퀴즈"].map((tabName) => {
-        const active = activeTab === tabName;
-        return (
-          <TouchableOpacity
-            key={tabName}
-            onPress={() => setActiveTab(tabName)}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: active ? "700" : "400",
-                color: active ? "#222" : "#555",
-              }}
-            >
-              {tabName}
-            </Text>
-
-            {/* 밑줄 강조 */}
-            {active && (
-              <View
-                style={{
-                  marginTop: 4,
-                  height: 2,
-                  backgroundColor: "#333",
-                  alignSelf: "stretch",
-                  borderRadius: 4,
-                }}
-              />
-            )}
+      <View style={{ paddingTop: 40 }}>
+        <BlurView
+          intensity={20}
+          tint="light"
+          style={styles.blurBar}
+        >
+          <TouchableOpacity onPress={goHome} style={styles.backBtn}>
+            <Text style={styles.backText}>{"<"}</Text>
           </TouchableOpacity>
-        );
-      })}
-    </BlurView>
+
+          {["기사", "요약", "키워드", "퀴즈"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setActiveTab(tab)}
+              style={styles.tabBtn}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab && styles.tabTextActive,
+                ]}
+              >
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </BlurView>
+      </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  blurBar: {
+    height: 48,                    // 블러는 상단바 높이만
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    overflow: "hidden",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+
+  backBtn: {
+    paddingRight: 10,
+  },
+  backText: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+
+  tabBtn: {
+    paddingHorizontal: 12,
+  },
+  tabText: {
+    fontSize: 15,
+    color: "#888",
+  },
+  tabTextActive: {
+    color: "#222",
+    fontWeight: "700",
+  },
+});

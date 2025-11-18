@@ -11,7 +11,7 @@ export default function AppBackground() {
     >
       <Image
         source={require("../../assets/pizza/pep.png")}
-        style={[styles.decoration, { top: 80, left: 140 }]}
+        style={[styles.decoration, { top: 100, left: 140 }]}
       />
 
       <Image
@@ -26,7 +26,7 @@ export default function AppBackground() {
 
       <Image
         source={require("../../assets/pizza/mar.png")}
-        style={[styles.decoration, { top: 460, right: 180 , transform: [{ rotate: "12deg" }],}]}
+        style={[styles.decoration, { top: 460, right: 60 , transform: [{ rotate: "12deg" }],}]}
       />
 
       <Image
@@ -36,7 +36,7 @@ export default function AppBackground() {
 
       <Image
         source={require("../../assets/food/chic.png")}
-        style={[styles.decoration, { top: 720, right: 120 }]}
+        style={[styles.decoration, { top: 720, right: 50 }]}
       />
 
       <Image
