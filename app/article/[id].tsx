@@ -121,14 +121,23 @@ export default function ArticleDetail() {
 
 
   // quiz state
+// [수정 1] isGraded를 배열로 초기화 (문제 개수만큼 false 채움)
   const [selected, setSelected] = useState({});
-  const [isGraded, setIsGraded] = useState({});
+  const [isGraded, setIsGraded] = useState(new Array(quizList.length).fill(false));
   const [isOpen, setIsOpen] = useState({});
 
   const handleSelect = (q, o) => setSelected((p) => ({ ...p, [q]: o }));
-  const handleGrade = (q) =>
-    setIsGraded((p) => ({ ...p, [q]: true })) ||
-    setIsOpen((p) => ({ ...p, [q]: true }));
+
+  // [수정 2] handleGrade를 배열 업데이트 방식으로 변경
+  const handleGrade = (qIndex) => {
+    setIsGraded((prev) => {
+      const newGraded = [...prev]; // 배열 복사
+      newGraded[qIndex] = true;    // 해당 문제 채점 완료 처리
+      return newGraded;
+    });
+    setIsOpen((p) => ({ ...p, [qIndex]: true })); // 해설 열기
+  };
+
   const toggleOpen = (q) =>
     setIsOpen((p) => ({ ...p, [q]: !p[q] }));
 
