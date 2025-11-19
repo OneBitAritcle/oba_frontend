@@ -195,7 +195,7 @@ export default function Home() {
           <Link href="/my" asChild>
             <TouchableOpacity>
               <Image
-                source={require("../assets/images/basic_profile.png")}
+                source={require("../../assets/knight/basic_profile.png")}
                 style={styles.profileIcon}
               />
             </TouchableOpacity>
