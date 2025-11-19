@@ -24,7 +24,7 @@ export default function MyPage() {
         {/* 프로필 정보 (사진 + id + 닉네임) */}
         <View style={styles.profileInfo}>
           <Image
-            source={require("../../assets/images/basic_profile.png")}
+            source={require("../../../assets/knight/basic_profile.png")}
             style={styles.profileImage}
           />
           <View>
