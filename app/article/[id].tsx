@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { View } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
 import TabBar from "./components/TabBar";
@@ -10,142 +10,94 @@ import QuizTab from "./components/QuizTab";
 
 export default function ArticleDetail() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams(); // /article/[id]
 
   const [activeTab, setActiveTab] = useState("기사");
 
-  // dummy article
-  const dummyArticle = {
-    id,
-    category: ["AI / 데이터", '클라우드', '생성형AI', 'AI', '빅데이터', '엔터프라이즈', '테크트랜드'],
-    title: "마이크로소프트 365 코파일럿, AI 기반 앱·워크플로우 자동 생성 지원…비개발자도 손쉽게 구축",
-    date: "2025.10.20",
-    source: "한입경제",
-    summary: "마이크로소프트는 로우코드/노코드 개발 툴인 코파일럿 스튜디오의 기능을 마이크로소프트 365 코파일럿에 통합하여 사용자가 생성형 AI 기반 어시스턴트를 통해 앱과 워크플로우를 쉽게 만들 수 있도록 하고 있다. 새롭게 추가된 앱 빌더와 워크플로우 에이전트를 통해 사용자들은 자연어 명령으로 앱 제작 및 자동화 프로세스를 설정할 수 있으며, 이러한 기능은 비즈니스와 사무직 노동자들을 대상으로 설계되었다. 코파일럿 스튜디오 라이트는 특정 업무 목적에 맞춘 AI 에이전트를 제작할 수 있는 기능을 제공하며, 모든 기능은 기존 구독자에게 추가 요금 없이 제공된다.",
-    keywords: [
-      { word: "로우코드/노코드", desc: "개발자가 아닌 사용자도 쉽게 소프트웨어를 만들 수 있도록 지원하는 플랫폼으로, 프로그래밍 지식 없이 앱을 개발할 수 있게 해준다." },
-      { word: "생성형 AI", desc: "사용자의 입력에 기반하여 새로운 콘텐츠를 생성하는 AI 기술로, 자연어 처리와 머신러닝을 활용한다." },
-      { word: "앱 빌더", desc: "사용자가 몇 분 만에 앱을 만들 수 있도록 돕는 도구로, 기존 콘텐츠를 기반으로 앱을 자동으로 구성하는 기능을 제공한다." },
-      { word: "워크플로우 자동화", desc: "사용자가 자연어 명령만으로 특정 작업을 자동화할 수 있도록 지원하는 기능으로, 효율적인 업무 처리를 가능하게 한다." },
-      { word: "AI 어시스턴트", desc: "사용자가 요청한 작업을 수행하고, 필요한 기능을 제안하는 인공지능 기반 도구로, 사용자의 업무를 보조한다." },
-      { word: "커리어 트래커", desc: "사용자가 목표 달성 현황과 일정을 시각화할 수 있도록 돕는 인터랙티브 앱의 예로, 마이크로소프트 365 코파일럿의 활용 사례 중 하나이다." },
-      { word: "에이전트형 워크플로우", desc: "사용자가 정의한 업무 프로세스를 자동으로 수행하는 인공지능 기반 시스템으로, 비개발자도 사용 가능하다." },
-      { word: "마이크로소프트 365 코파일럿", desc: "마이크로소프트의 생산성 도구로, 다양한 AI 기능을 통해 사용자 업무를 지원하며, 로우코드/노코드 개발을 지원한다." },
-      { word: "자연어 프롬프트", desc: "사용자가 자연어로 시스템에 명령을 내리는 방식을 의미하며, 사용자와 AI 간의 상호작용을 자연스럽게 만들어준다." },
-      { word: "코파일럿 스튜디오 라이트", desc: "특정 업무 목적에 맞춘 AI 에이전트를 제작할 수 있는 간소화된 도구로, 마이크로소프트 365 코파일럿 내에서 사용할 수 있다." },
+  /** ✅ 타입 명시 (IMPORTANT) */
+  const [article, setArticle] = useState<any | null>(null);
+  const [quizList, setQuizList] = useState<any[]>([]);
+
+  const [selected, setSelected] = useState<{ [key: number]: number }>({});
+  const [isGraded, setIsGraded] = useState<boolean[]>([]);
+  const [isOpen, setIsOpen] = useState<{ [key: number]: boolean }>({});
+
+  // 🚀 API 연동 (Spring → FastAPI → MongoDB)
+  useEffect(() => {
+    const loadArticle = async () => {
+      try {
+        const res = await fetch(`http://localhost:8081/article/${id}`);
+        const data = await res.json();
+
+        setArticle(data);
+
+        /** 퀴즈 리스트 세팅 */
+        setQuizList(data.quizzes || []);
+
+        /** 채점 여부 배열 생성 */
+        setIsGraded(new Array(data.quizzes.length).fill(false));
+
+        /** isOpen 초기값 생성 */
+        const openState: { [key: number]: boolean } = {};
+        data.quizzes.forEach((_: any, idx: number) => {
+          openState[idx] = false;
+        });
+        setIsOpen(openState);
+
+      } catch (err) {
+        console.error("❌ Article API Error:", err);
+      }
+    };
+
+    loadArticle();
+  }, [id]);
 
 
-    ],
-    subtitle: ["nosubtitle", 'MicroSoft 365의 특징과 새로운 기능들'],
-    content:[["마이크로소프트가 자사의 로우코드/노코드 개발 툴인 코파일럿 스튜디오의 기능을 마이크로소프트 365 코파일럿에 한층 더 깊게 통합하고 있다.",
-      "마이크로소프트 365 코파일럿(Microsoft 365 Copilot) 사용자는 이제 생성형 AI 기반 어시스턴트를 통해 대시보드, 차트, 기타 인터랙티브 요소를 포함한 앱을 직접 제작할 수 있다.",
-      "이 기능은 마이크로소프트가 최근 공개한마이크로소프트 365 코파일럿의 세 가지 새로운 업무 자동화 기능중 하나다. 나머지 두 가지는 ‘워크플로우 자동화 빌더 에이전트(Workflow Automation Builder Agent)’와 ‘코파일럿 스튜디오 라이트(Copilot Studio lite)’다. 라이트 버전은 마이크로소프트의 로우코드/노코드 기반 AI 에이전트 제작 툴을 간소화한 형태로, 마이크로소프트 365 코파일럿에서 바로 접근할 수 있다.",
-      "마이크로소프트 비즈니스 및 인더스트리 코파일럿 부문 사장 찰스 라만나는 블로그를 통해 “이제 코파일럿은 다양한 에이전트와 코파일럿 스튜디오를 통해 대화하듯 쉽게 앱과 워크플로우, 에이전트를 만들어 아이디어를 실행 가능한 성과로 전환할 수 있도록 지원한다”라고 설명했다.",
-      "마이크로소프트 대변인은 “이번 기능은 광범위한 사무직 노동자를 대상으로 설계됐으며, IT 관리자는 필요에 따라 앱 빌더(App Builder)나 워크플로우 기능의 접근 권한을 부여하거나 제한할 수 있다”라고 전했다.",
-      "마이크로소프트에 따르면, 새롭게 추가된 ‘앱 빌더(App Builder)’ 도구를 활용하면 몇 분 만에 앱을 만들 수 있다. AI 어시스턴트는 마이크로소프트 365의 문서, 프레젠테이션, 스프레드시트 등 기존 콘텐츠를 기반으로 앱을 자동 구성한다. 회사 측은 목표 달성 현황과 다가오는 일정을 시각화하는 인터랙티브 ‘커리어 트래커(career tracker)’ 앱을 사례로 제시했다.",
-      "사용자는 앱 제작을 시작할 때 앱의 개요를 간단히 설명하는 텍스트와 관련 문서를 함께 제공하면 된다. 이후 미리보기 화면에서 앱 레이아웃을 확인하고, 마이크로소프트 365 코파일럿 창에서 자연어 프롬프트를 통해 세부 디자인을 조정할 수 있다. AI 어시스턴트가 추가할 기능이나 수정이 필요한 부분을 제안하기도 한다. 앱이 완성돼 게시되면 문서처럼 링크로 공유할 수 있으며, 생성된 데이터는 마이크로소프트 리스트(Microsoft Lists)에 백엔드 형태로 저장된다.",
-      "J. 골드 어소시에이츠(J. Gold Associates)의 수석 애널리스트 잭 골드는 “앱 빌더는 최근 주목받는 AI 기반 바이브 코딩(vibe coding) 툴과 유사한 성격을 띤다. 이 기능은 마케팅, 영업, 인사 등 개발자 지원을 받기 어려운 부서가 간단한 인터랙티브 앱을 빠르게 제작할 수 있도록 돕는다. 수주일 또는 수개월이 걸리던 앱 제작 과정을 획기적으로 단축시킬 것”이라고 분석했다.",
-      "이와 함께 마이크로소프트는 마이크로소프트 365 코파일럿에 새롭게 추가된 ‘워크플로우 에이전트(Workflows Agent)’를 통해 사용자가 자연어 명령만으로 이메일 발송이나 일정 관리 같은 워크플로우를 설정할 수 있다고 밝혔다. 이 기능은 기존 코파일럿 스튜디오의 ‘에이전트 플로우(Agent Flows)’ 기능을 기반으로 한다.",
-      "Microsoft",
-      "사용자는 먼저 수행하려는 작업을 간단히 설명하면 된다. 예를 들어, 소프트웨어 버그 리포트를 자동으로 처리해 발신자에게 접수 확인 메일을 보내는 워크플로우를 만들 수 있다. 그러면 AI 에이전트가 아웃룩이나 팀즈 같은 앱과 연동해 자동화 프로세스를 생성한다. 자동화된 작업은 시각적 흐름도로 표시되며, 사용자는 자연어로 수정이나 추가 요청을 할 수 있다. 생성된 워크플로우가 실행되면 그 사용 현황 역시 추적할 수 있다.",
-      "이에 대해 골드는 “코딩 경험이 거의 없는 지식 근로자가 과연 유용한 에이전트형 워크플로우를 스스로 정의하고 구축할 수 있는지가 관건”이라며 “여러 차례 반복이 필요할 수 있고, 그 과정을 끝까지 감내할 인내심이 있을지도 의문”이라고 지적했다. 이어 “에이전트를 활용해 완전한 자동화를 구현하려면 프로세스를 명확히 정의해야 하는데, 모든 사용자가, 특히 복잡한 워크플로우를 명확하게 정의할 수 있을지 확신하기 어렵다”라고 덧붙였다.",
-      "‘코파일럿 스튜디오 라이트’는 마이크로소프트 365 코파일럿 내에서 특정 업무 목적에 맞춘 AI 에이전트를 제작할 수 있도록 지원하는 기능이다. 사용자는 에이전트의 역할과 목적을 자연어로 설명하거나, ‘구성’ 화면을 통해 에이전트가 접근할 수 있는 파일이나 데이터 범위 등 세부 사항을 지정할 수 있다.",
-      "앱 빌더와 워크플로우 에이전트는 이미 마이크로소프트 365 코파일럿 구독자에게 ‘마이크로소프트 365 에이전트 스토어(Microsoft 365 Agent Store)’를 통해 제공된다. 추가 요금 없이 기존 라이선스 내에서 이용할 수 있다. 구독자는 코파일럿 스튜디오 라이트 역시 무료로 사용할 수 있다. 비구독자의 경우 마이크로소프트의 ‘코파일럿 크레딧(Copilot Credits)’ 제도나 사용량 기반 요금제를 통해 기능을 이용할 수 있다.",
-      "코파일럿 스튜디오 라이트는 웹 기반 지식만을 활용하는 AI 에이전트를 만들 때는 무료로 사용할 수 있다."
-    ], ['테스트용 추가 내용을 삽입했습니다. 해당 부분은 2번째 문단입니다. 이 부분은 문장들이 엔터 없이 디스플레이 되고 있어야 합니다.']],
+  /** 🔥 선택 핸들러 */
+  const handleSelect = (qIndex: number, option: number) => {
+    setSelected((prev) => ({
+      ...prev,
+      [qIndex]: option,
+    }));
   };
 
-  // dummy quiz
-  const quizList = [
-    {
-      question: "마이크로소프트 365 코파일럿에 새롭게 추가된 기능은 무엇인가요?",
-      options: [
-       "AI 기반 데이터 분석 도구",
-          "앱 빌더와 워크플로우 자동화",
-          "고급 프로그래밍 언어 학습",
-          "클라우드 스토리지 용량 증가"
-      ],
-      answer: 1,
-      explanation: "마이크로소프트 365 코파일럿은 앱 빌더와 워크플로우 자동화 기능을 새롭게 추가하여 사용자가 쉽게 앱을 제작하고 업무 프로세스를 자동화할 수 있도록 지원하고 있습니다."
-    },
-
-    {
-      question: "로우코드/노코드 개발의 주요 이점은 무엇인가요?",
-      options: [
-        "전문 개발자만 사용할 수 있다",
-          "비개발자도 앱 제작 가능",
-          "복잡한 코딩 작업이 필요하다",
-          "모든 프로세스를 자동으로 처리한다"
-      ],
-      answer: 1,
-      explanation: "로우코드/노코드 개발은 비개발자도 쉽게 소프트웨어를 만들 수 있도록 지원하는 플랫폼으로, 프로그래밍 지식 없이도 앱을 개발할 수 있게 해줍니다."
-    },
-
-    {
-      question: "AI 어시스턴트의 주요 기능은 무엇인가요?",
-      options: [
-       "코딩 작업 자동화",
-          "사용자의 요청 수행 및 제안",
-          "데이터베이스 관리",
-          "서버 유지보수"
-      ],
-      answer: 1,
-      explanation:
-        "AI 어시스턴트는 사용자가 요청한 작업을 수행하고 필요한 기능을 제안하는 인공지능 기반 도구로, 사용자의 업무를 보조합니다."
-    },
-
-    {
-      question: "커리어 트래커 앱의 주요 기능은 무엇인가요?",
-      options: [
-        "온라인 쇼핑 지원",
-          "사용자 목표의 시각화",
-          "소셜 미디어 관리",
-          "비즈니스 회계 기록"
-      ],
-      answer: 1,
-      explanation: "커리어 트래커 앱은 사용자가 목표 달성 현황과 일정을 시각화할 수 있도록 돕는 인터랙티브 앱으로, 마이크로소프트 365 코파일럿의 활용 사례 중 하나입니다"
-    },
-
-    {
-      question: "워크플로우 자동화 기능의 주목적은 무엇인가요?",
-      options: [
-           "소프트웨어 개발",
-          "업무 프로세스의 자동화",
-          "데이터 분석",
-          "비즈니스 모델 설계"
-      ],
-      answer: 1,
-      explanation: "워크플로우 자동화 기능은 사용자가 자연어 명령만으로 특정 작업을 자동화할 수 있도록 지원하는 기능으로, 효율적인 업무 처리를 가능하게 합니다."
-    },
-  ];
-
-
-  // quiz state
-// [수정 1] isGraded를 배열로 초기화 (문제 개수만큼 false 채움)
-  const [selected, setSelected] = useState({});
-  const [isGraded, setIsGraded] = useState(new Array(quizList.length).fill(false));
-  const [isOpen, setIsOpen] = useState({});
-
-  const handleSelect = (q, o) => setSelected((p) => ({ ...p, [q]: o }));
-
-  // [수정 2] handleGrade를 배열 업데이트 방식으로 변경
-  const handleGrade = (qIndex) => {
+  /** 🔥 채점 핸들러 */
+  const handleGrade = (qIndex: number) => {
     setIsGraded((prev) => {
-      const newGraded = [...prev]; // 배열 복사
-      newGraded[qIndex] = true;    // 해당 문제 채점 완료 처리
-      return newGraded;
+      const copy = [...prev];
+      copy[qIndex] = true;
+      return copy;
     });
-    setIsOpen((p) => ({ ...p, [qIndex]: true })); // 해설 열기
+
+    // 정답 확인 창 열기
+    setIsOpen((prev) => ({
+      ...prev,
+      [qIndex]: true,
+    }));
   };
 
-  const toggleOpen = (q) =>
-    setIsOpen((p) => ({ ...p, [q]: !p[q] }));
+  /** 🔥 정답창 열고 닫기 */
+  const toggleOpen = (qIndex: number) => {
+    setIsOpen((prev) => ({
+      ...prev,
+      [qIndex]: !prev[qIndex],
+    }));
+  };
+
+  // 🚨 API 로딩 중
+  if (!article) {
+    return (
+      <View style={{ flex: 1, paddingTop: 50 }}>
+        <Text style={{ textAlign: "center" }}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View
       style={{
         flex: 1,
-        paddingTop: 10,           // Safe area 확보
+        paddingTop: 10,
         backgroundColor: "transparent",
       }}
     >
@@ -155,9 +107,12 @@ export default function ArticleDetail() {
         goHome={() => router.push("/")}
       />
 
-      {activeTab === "기사" && <ArticleTab article={dummyArticle} />}
-      {activeTab === "요약" && <SummaryTab summary={dummyArticle.summary} />}
-      {activeTab === "키워드" && <KeywordTab keywords={dummyArticle.keywords} />}
+      {activeTab === "기사" && <ArticleTab article={article} />}
+      {activeTab === "요약" && <SummaryTab summary={article.summary} />}
+      {activeTab === "키워드" && (
+        <KeywordTab keywords={article.keywords || []} />
+      )}
+
       {activeTab === "퀴즈" && (
         <QuizTab
           quizList={quizList}

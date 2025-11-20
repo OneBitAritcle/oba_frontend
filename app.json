@@ -1,68 +1,29 @@
 {
   "expo": {
-    "name": "oba_frontend",              // 앱 이름 (기기 홈 화면에서 보임)
-    "slug": "oba_frontend",              // Expo 프로젝트 주소/식별자
-    "version": "1.0.0",                  // 앱 버전 (스토어 배포 시 증가)
-    "orientation": "portrait",           // 화면 방향 고정 (세로)
-    "icon": "./assets/images/icon.png",  // 앱 아이콘 경로
-    "scheme": "obafrontend",             // 딥링크 스킴 (ex: obafrontend://...)
-    "userInterfaceStyle": "automatic",   // 시스템 다크/라이트 모드 자동 감지
-    "newArchEnabled": true,              // React Native New Architecture 사용 (Fabric/TurboModules 활성화)
+    "name": "oba_frontend",
+    "slug": "oba_frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "myapp",
 
-    // --------------------------------------------------
-    // iOS 설정
-    // --------------------------------------------------
+    "platforms": ["ios", "android"],
+
     "ios": {
-      "supportsTablet": true             // 아이패드에서 앱 지원 여부
+      "bundleIdentifier": "com.obacrew.app"
     },
 
-    // --------------------------------------------------
-    // Android 설정
-    // --------------------------------------------------
     "android": {
-      "adaptiveIcon": {                  // Android 전용 adaptive icon 구성
-        "backgroundColor": "#E6F4FE",    // 아이콘 배경색
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "edgeToEdgeEnabled": true,         // 최신 안드로이드 Edge-to-Edge UI 사용
-      "predictiveBackGestureEnabled": false // Android 13 이상 Predictive Back 기능 비활성화 (안정성)
+      "package": "com.obacrew.app"
     },
 
-    // --------------------------------------------------
-    // Web 설정 (expo web 배포 시 적용)
-    // --------------------------------------------------
-    "web": {
-      "output": "static",                // 정적 사이트로 빌드 (Netlify/GitHub Pages 호환)
-      "favicon": "./assets/images/favicon.png"  // 웹 파비콘
-    },
-
-    // --------------------------------------------------
-    // Expo Plugins (라우터, 스플래시 스크린 설정)
-    // --------------------------------------------------
     "plugins": [
-      "expo-router",                      // 파일 기반 라우팅 활성화 (app 폴더 구조 기반)
-      [
-        "expo-splash-screen",             // 앱 첫 실행 시 스플래시 화면 설정
-        {
-          "image": "./assets/images/splash-icon.png", // 스플래시 이미지
-          "imageWidth": 200,              // 이미지 크기
-          "resizeMode": "contain",        // contain → 화면에 맞게 유지
-          "backgroundColor": "#ffffff",   // 라이트 모드 배경
-          "dark": {
-            "backgroundColor": "#000000"  // 다크 모드 배경
-          }
-        }
-      ]
+      "expo-router",
+      "expo-secure-store",
+      "expo-web-browser"
     ],
 
-    // --------------------------------------------------
-    // 실험 기능 (최신 기능)
-    // --------------------------------------------------
     "experiments": {
-      "typedRoutes": true,               // 라우팅 타입 자동 생성 (타입스크립트에서 경로 오류 방지)
-      "reactCompiler": true              // React Compiler 활성화 (성능 개선)
+      "typedRoutes": true
     }
   }
 }
