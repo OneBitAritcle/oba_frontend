@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oba_frontend
+    ports:
+      # Expo Web
+      - "8081:8081"
+      # Expo DevTools
+      - "19002:19002"
+      # (참고) Android/iOS 개발 포트도 열어둠
+      - "19000:19000"
+      - "19001:19001"
+    environment:
+      # 나중에 backend 서비스와 연결 가능
+      API_BASE_URL: http://backend:8000
+    volumes:
+      - .:/app
+      - /app/node_modules   # node_modules는 호스트와 분리
+    command: yarn expo start --web
+    stdin_open: true
+    tty: true
+
+  # 나중에 추가될 예정 (지금은 주석 처리)
+  # backend:
+  #   build:
+  #     context: ../oba_backend
+  #     dockerfile: Dockerfile
+  #   container_name: oba_backend
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     DB_HOST: database
+  #   depends_on:
+  #     - database
+
+  # database:
+  #   image: postgres:15
+  #   container_name: oba_db
+  #   environment:
+  #     POSTGRES_DB: oba
+  #     POSTGRES_USER: oba
+  #     POSTGRES_PASSWORD: 1234
+  #   ports:
+  #     - "5432:5432"
