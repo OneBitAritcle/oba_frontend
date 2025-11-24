@@ -218,50 +218,38 @@
 //   },
 // });
 
-// Version 3. 안정성 강화 + 타입 오류 완전 제거
+// Version 2. 본문 카드 스타일 추가
 import { useState } from "react";
+import { View, Text, ScrollView, StyleSheet, Platform, Image, TouchableOpacity } from "react-native";
 
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Platform,
-  Image,
-  Pressable,          // ← 변경됨
-} from "react-native";
+// [이미지 경로] assets/icons 폴더가 프로젝트 최상위에 위치 (3단계 상위)
+const iconExpanded = require("../../../assets/icons/toggle_1.png"); // 펼쳐졌을 때
+const iconCollapsed = require("../../../assets/icons/toggle_2.png"); // 접혀있을 때
 
-
-const iconExpanded = require("../../../assets/icons/toggle_1.png");
-const iconCollapsed = require("../../../assets/icons/toggle_2.png");
-
-interface ArticleData {
-  title?: string;
-  source?: string;
-  date?: string;
-  category?: string[];
-  summary?: string;
-  subtitle?: string[];
-  content?: string[] | string[][];
-}
-
-export default function ArticleTab({ article }: { article: ArticleData }) {
+export default function ArticleTab({ article }) {
+  // 1. 토글 상태 관리
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const categoryList = Array.isArray(article.category) ? article.category : [];
-  const summaryText = article.summary ?? null;
-  const subtitles = Array.isArray(article.subtitle) ? article.subtitle : [];
-  const contents = Array.isArray(article.content) ? article.content : [];
+  // 2. 데이터 안전장치
+  const categoryList = article.category || [];
+
+  // 3. AI 요약 데이터
+  const summaryText = article.summary || null;
+
+  // [NEW] 4. 본문 및 소제목 데이터 준비
+  const subtitles = article.subtitle || [];
+  const contents = article.content || [];
 
   return (
-    <ScrollView
+    <ScrollView 
       contentContainerStyle={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
     >
-      {/* 헤더 */}
+      {/* --- 헤더 영역 (배경 위에 바로 표시) --- */}
       <View style={styles.headerContainer}>
+        {/* 카테고리 */}
         <View style={styles.categoryWrapper}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
             {categoryList.map((cat, idx) => (
               <View key={idx} style={styles.categoryChip}>
                 <Text style={styles.categoryText}>{cat}</Text>
@@ -270,31 +258,34 @@ export default function ArticleTab({ article }: { article: ArticleData }) {
           </ScrollView>
         </View>
 
-        <Text style={styles.title}>{article.title ?? "제목 없음"}</Text>
+        {/* 제목 */}
+        <Text style={styles.title}>{article.title}</Text>
 
+        {/* 메타 정보 */}
         <Text style={styles.meta}>
-          {article.source ?? "출처 없음"} · {article.date ?? "날짜 없음"}
+          {article.source} · {article.date}
         </Text>
       </View>
 
-      {/* AI 요약 */}
+      {/* --- AI 요약 카드 (본문 카드 위에 별도 배치) --- */}
       {summaryText && (
         <View style={styles.aiCard}>
-          <Pressable
-            style={styles.aiHeader}
+          <TouchableOpacity 
+            activeOpacity={0.7}
             onPress={() => setIsExpanded(!isExpanded)}
+            style={styles.aiHeader}
           >
             <Text style={styles.aiTitle}>
               {isExpanded ? "AI 요약 접기" : "AI 요약 보기"}
             </Text>
-
-            <Image
-              source={isExpanded ? iconExpanded : iconCollapsed}
+            <Image 
+              source={isExpanded ? iconExpanded : iconCollapsed} 
               style={styles.toggleIcon}
               resizeMode="contain"
             />
-          </Pressable>
+          </TouchableOpacity>
 
+          {/* 펼쳐졌을 때 내용 표시 */}
           {isExpanded && (
             <View style={styles.aiBody}>
               <Text style={styles.aiText}>{summaryText}</Text>
@@ -303,29 +294,36 @@ export default function ArticleTab({ article }: { article: ArticleData }) {
         </View>
       )}
 
-      {/* 본문 카드 */}
+      {/* --- 본문 영역 (화이트 카드 스타일) --- */}
       <View style={styles.contentCard}>
-        {contents.map((sectionLines: any, index: number) => {
+        {/* [NEW] subtitle과 content 배열을 매핑하여 렌더링 */}
+        {contents.map((sectionLines, index) => {
+          // 해당 인덱스의 소제목 가져오기
           const subTitle = subtitles[index];
-          const showSubTitle =
-            subTitle && typeof subTitle === "string" && subTitle !== "nosubtitle";
+          
+          // 소제목 표시 여부 ('nosubtitle'이 아니고 값이 있을 때만)
+          const showSubTitle = subTitle && subTitle !== "nosubtitle";
 
+          // 본문 리스트 합치기: 문장들을 공백(" ")으로 연결하여 문단 형성
           const paragraph = Array.isArray(sectionLines)
             ? sectionLines.join("\n\n")
-            : String(sectionLines ?? "");
+            : sectionLines;
 
           return (
             <View key={index} style={styles.sectionBlock}>
+              {/* 소제목 영역 */}
               {showSubTitle && (
                 <Text style={styles.sectionTitle}>{subTitle}</Text>
               )}
-
+              
+              {/* 본문 문단 영역 */}
               <Text style={styles.content}>{paragraph}</Text>
             </View>
           );
         })}
       </View>
-
+      
+      {/* 하단 여백 확보용 */}
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -333,19 +331,22 @@ export default function ArticleTab({ article }: { article: ArticleData }) {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    backgroundColor: "#F5F6F8",
+    backgroundColor: "#F5F6F8", // 1. 전체 배경: 아주 연한 쿨그레이
     flexGrow: 1,
   },
 
+  // --- 헤더 스타일 ---
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 20,
   },
 
-  categoryWrapper: { marginBottom: 10 },
+  categoryWrapper: {
+    marginBottom: 10,
+  },
   categoryChip: {
-    backgroundColor: "rgba(0,0,0,0.05)",
+    backgroundColor: "rgba(0,0,0,0.05)", // 배경색에 어우러지는 반투명 칩
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
@@ -365,14 +366,20 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
-  meta: { fontSize: 13, color: "#8B95A1" },
+  meta: {
+    fontSize: 13,
+    color: "#8B95A1",
+  },
 
+  // --- AI 요약 카드 스타일 ---
   aiCard: {
     backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 16, // 본문 카드와의 간격
     borderRadius: 16,
     overflow: "hidden",
+    
+    // 그림자
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -383,7 +390,6 @@ const styles = StyleSheet.create({
       android: { elevation: 2 },
     }),
   },
-
   aiHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -396,16 +402,29 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#4B6EF5",
   },
-  toggleIcon: { width: 35, height: 35 },
+  toggleIcon: {
+    width: 35,
+    height: 35,
+  },
+  aiBody: {
+    padding: 16,
+    paddingTop: 0,
+    backgroundColor: "#F9FAFB",
+  },
+  aiText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: "#333D4B",
+  },
 
-  aiBody: { padding: 16, paddingTop: 0, backgroundColor: "#F9FAFB" },
-  aiText: { fontSize: 14, lineHeight: 22, color: "#333D4B" },
-
+  // --- 본문 카드 스타일 ---
   contentCard: {
-    backgroundColor: "#FFFFFF",
-    marginHorizontal: 16,
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: "#FFFFFF", // 2. 본문 배경: 깨끗한 흰색
+    marginHorizontal: 16,       // 좌우 여백
+    borderRadius: 20,           // 모서리 둥글게
+    padding: 24,                // 내부 여백
+    
+    // 3. 그림자 효과
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -413,27 +432,30 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 10,
       },
-      android: { elevation: 3 },
+      android: {
+        elevation: 3,
+      },
     }),
   },
 
-  sectionBlock: { marginBottom: 24 },
+  // [NEW] 섹션 스타일
+  sectionBlock: {
+    marginBottom: 24, // 문단 사이 간격
+  },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 19,        
     fontWeight: "700",
     color: "#191F28",
-    marginBottom: 12,
-    marginTop: 8,
+    marginBottom: 12,    // 제목과 내용 사이 간격
+    marginTop: 8,        
   },
   content: {
     fontSize: 16,
-    lineHeight: 26,
-    color: "#333D4B",
+    lineHeight: 26,     // 줄간격
+    color: "#333D4B",   // 가독성 좋은 짙은 회색
     letterSpacing: -0.2,
   },
 });
-
-
 
 // // Version 3. 본문 카드 스타일 제거 + 퀴즈 버튼 제거
 // import { useState } from "react";
