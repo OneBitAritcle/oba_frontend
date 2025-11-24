@@ -1,111 +1,55 @@
-// app/(auth)/login.tsx
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
 
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
+WebBrowser.maybeCompleteAuthSession();
 
-const { width, height } = Dimensions.get("window");
+const BACKEND = "http://localhost:8080";
 
 export default function Login() {
+  const redirectUri = makeRedirectUri({
+    scheme: "myapp",
+  });
+
+  const openOAuth = async (provider: string) => {
+    await WebBrowser.openBrowserAsync(
+      `${BACKEND}/oauth2/authorization/${provider}?redirect_uri=${redirectUri}`
+    );
+  };
+
   return (
     <View style={styles.container}>
-      
-      {/* 로고 / 캐릭터 */}
-      <Image
-        source={require("../../assets/knight/hand.png")}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <TouchableOpacity style={styles.btn} onPress={() => openOAuth("google")}>
+        <Image source={require("../../assets/icons/google.png")} style={styles.icon} />
+        <Text>구글로 로그인</Text>
+      </TouchableOpacity>
 
-      {/* 타이틀 */}
-      <Text style={styles.title}>한입기사</Text>
-      <Text style={styles.subtitle}>One Bite Article</Text>
+      <TouchableOpacity style={styles.btn} onPress={() => openOAuth("kakao")}>
+        <Image source={require("../../assets/icons/kakao-talk.png")} style={styles.icon} />
+        <Text>카카오로 로그인</Text>
+      </TouchableOpacity>
 
-      {/* 소셜 로그인 버튼 영역 */}
-      <View style={styles.btnWrap}>
-        <TouchableOpacity style={[styles.btn, styles.google]}>
-          <Image
-            source={require("../../assets/icons/google.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.btnText}>구글로 로그인</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.btn, styles.kakao]}>
-          <Image
-            source={require("../../assets/icons/kakao-talk.png")}
-            style={styles.icon}
-          />
-          <Text style={[styles.btnText, { color: "#3B1E1E" }]}>
-            카카오로 로그인
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.btn, styles.naver]}>
-          <Image
-            source={require("../../assets/icons/naver.png")}
-            style={styles.icon}
-          />
-          <Text style={styles.btnText}>네이버로 로그인</Text>
-        </TouchableOpacity>
-      </View>
-
+      <TouchableOpacity style={styles.btn} onPress={() => openOAuth("naver")}>
+        <Image source={require("../../assets/icons/naver.png")} style={styles.icon} />
+        <Text>네이버로 로그인</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // backgroundColor: "#F5FAFF",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-
-  // 🔥 캐릭터 크게 + 비율 유지
-  logo: {
-    width: width * 0.55,
-    height: height * 0.23,
-    marginBottom: 16,
-  },
-
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginTop: 4,
-    marginBottom: 42,
-  },
-
-  // 🔥 버튼 영역: 85% 폭으로 iOS 스타일
-  btnWrap: {
-    width: "85%",
-    gap: 14,
-    alignItems: "center",
-  },
-
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
   btn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
+    padding: 16,
+    marginVertical: 8,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    gap: 10,
-    justifyContent: "center",
-    width: "100%",
+    width: 220,
+    alignItems: "center",
   },
-
-  icon: { width: 20, height: 20, resizeMode: "contain" },
-
-  google: { backgroundColor: "#FFF", borderWidth: 1, borderColor: "#DDD" },
-  kakao: { backgroundColor: "#FEE500" },
-  naver: { backgroundColor: "#03C75A" },
-
-  btnText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#222",
+  icon: {
+    width: 32,
+    height: 32,
+    marginBottom: 6,
   },
 });
