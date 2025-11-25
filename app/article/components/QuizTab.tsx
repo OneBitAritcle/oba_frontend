@@ -847,7 +847,7 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
       }
     } else {
       return {
-        emoji: "📚",
+        emoji: "😓",
         title: "아쉬워요",
         desc: `${totalCount}문제 중 ${correctCount}개를 맞혔어요.\n다음엔 따끈한 피자에 더 가까워질 거예요! 🍕😊`,
       }
@@ -1266,7 +1266,7 @@ const styles = StyleSheet.create({
   pizzaConfetti: {
     position: "absolute",
     top: "50%",
-    left: "50%",
+    left: "-10%",
   },
   pizzaImage: {
     width: 60,
