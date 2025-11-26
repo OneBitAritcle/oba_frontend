@@ -1,3 +1,4 @@
+// app/index.tsx
 import { useRef, useState, useEffect } from "react";
 import {
   View,
@@ -6,20 +7,43 @@ import {
   Image,
   StyleSheet,
   Animated,
-  Dimensions,
+  useWindowDimensions,
+  Platform,
   Pressable,
-  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
+import { articles } from "../data/article"; 
 
-const { width } = Dimensions.get("window");
-
-const CARD_WIDTH = width * 0.65;
+// ===============================
+// CONFIG
+// ===============================
 const CARD_SPACING = 10;
-const SIDE_SPACING = (width - CARD_WIDTH * 3) / 2;
-const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
+
+function useDynamicDimensions() {
+  const { width } = useWindowDimensions();
+  const CARD_WIDTH = width * 0.65;
+  const SIDE_SPACING = (width - CARD_WIDTH) / 2;
+  const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
+  return { width, CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL };
+}
+
+// 첫 이미지 추출 함수
+const getFirstImage = (content: any): string | null => {
+  if (!Array.isArray(content)) return null;
+  for (const section of content) {
+    for (const line of section) {
+      if (typeof line === "string" && line.startsWith("<img>")) {
+        return line.replace("<img>", "").trim();
+      }
+    }
+  }
+  return null;
+};
 
 export default function Home() {
+  const { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
+  
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -28,63 +52,54 @@ export default function Home() {
     weekday: "short",
   });
 
-  // ================================
-  // 🔥 1) Spring 최신 기사 상태
-  // ================================
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // ================================
-  // 🔥 2) API 호출
-  // ================================
-  useEffect(() => {
-    fetch("http://<SPRING_IP>:8080/articles/latest")
-      .then((res) => res.json())
-      .then((data) => {
-        // data = [{ id, title, bullets }]
-        setArticles(data);
-        setLoading(false);
-      })
-      .catch((e) => {
-        console.log("❌ 최신 기사 불러오기 실패:", e);
-        setLoading(false);
-      });
-  }, []);
-
-  // ===============================================
-  // 🔥 3) loopData 구성 (articles 기반)
-  // ===============================================
+  // Loop용 데이터: 앞뒤 패딩 추가로 무한 루프 구성
   const loopData =
-    articles.length >= 2
+    articles.length >= 3
       ? [
-          articles[articles.length - 2],
-          articles[articles.length - 1],
-          ...articles,
-          articles[0],
-          articles[1],
+          ...articles.slice(-2), // 마지막 2개를 앞에 복사
+          ...articles,            // 원본
+          ...articles.slice(0, 2), // 첫 2개를 뒤에 복사
         ]
-      : [];
+      : new Array(5).fill(articles[0]);
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef(null);
-  const [index, setIndex] = useState(2);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [index, setIndex] = useState(articles.length >= 2 ? 2 : 0); // 원본 시작점으로 설정
 
-  const handleScrollEnd = (e) => {
+  // 초기 로드 시 중앙 위치로 스크롤
+  useEffect(() => {
+    if (scrollViewRef.current && loopData.length > 0) {
+      const startIdx = articles.length >= 2 ? 2 : 0;
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          x: startIdx * SNAP_INTERVAL,
+          animated: false,
+        });
+      }, 100);
+    }
+  }, [SNAP_INTERVAL, loopData.length]);
+
+  // =============================
+  // LOOP 처리 - 무한 루프 구현
+  // =============================
+  const handleScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
     let newIndex = Math.round(offsetX / SNAP_INTERVAL);
 
-    if (newIndex === 0) {
-      newIndex = articles.length;
-      scrollViewRef.current.scrollTo({
-        x: articles.length * SNAP_INTERVAL,
+    // 앞쪽 패딩 영역에 도달: 뒤쪽으로 이동
+    if (newIndex < articles.length / 2) {
+      newIndex = articles.length + (newIndex % articles.length);
+      scrollViewRef.current?.scrollTo({
+        x: newIndex * SNAP_INTERVAL,
         animated: false,
       });
     }
 
-    if (newIndex === loopData.length - 1) {
-      newIndex = 1;
-      scrollViewRef.current.scrollTo({
-        x: SNAP_INTERVAL,
+    // 뒤쪽 패딩 영역에 도달: 앞쪽으로 이동
+    if (newIndex >= articles.length + articles.length / 2) {
+      newIndex = articles.length - (loopData.length - newIndex);
+      scrollViewRef.current?.scrollTo({
+        x: newIndex * SNAP_INTERVAL,
         animated: false,
       });
     }
@@ -92,10 +107,11 @@ export default function Home() {
     setIndex(newIndex);
   };
 
-  // ===============================================
+
+  // =============================
   // 카드 컴포넌트
-  // ===============================================
-  const Card = ({ item, cardIndex }) => {
+  // =============================
+  const Card = ({ item, cardIndex }: { item: any; cardIndex: number }) => {
     const inputRange = [
       (cardIndex - 1) * SNAP_INTERVAL,
       cardIndex * SNAP_INTERVAL,
@@ -112,46 +128,64 @@ export default function Home() {
       outputRange: [0.4, 1, 0.4],
     });
 
+    const firstImage = Array.isArray(item?.content) ? getFirstImage(item.content) : null;
+    const summaryText = item?.summary ?? "";
+
     return (
       <Link href={`/article/${item.id}`} asChild>
         <Pressable>
           <Animated.View
             style={[
-              styles.card,
-              { opacity, transform: [{ scale }] },
+              {
+                width: CARD_WIDTH,
+                height: 400,
+                marginRight: CARD_SPACING,
+                backgroundColor: "#fff",
+                borderRadius: 18,
+                padding: 14,
+                shadowColor: "#000",
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+              },
+              {
+                opacity,
+                transform: [{ scale }],
+              },
             ]}
-          >
-            <Text style={styles.cardTitle}>{item.title}</Text>
+          >  
+            {/* 제목 */}
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
 
-            <View style={{ marginTop: 10 }}>
-              {item.bullets.map((b, i) => (
-                <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
-                  <Text style={{ marginRight: 6, fontSize: 12 }}>•</Text>
-                  <Text style={{ fontSize: 13, flex: 1 }}>{b}</Text>
-                </View>
-              ))}
-            </View>
+            {/* 이미지 또는 플레이스홀더 */}
+            {firstImage ? (
+              <Image
+                source={{ uri: firstImage }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.cardPlaceholder}>
+                <Image
+                  source={require("../../assets/knight/deliever.png")}
+                  style={styles.placeholderImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.placeholderText}>이미지가 없습니다.</Text>
+              </View>
+            )}
+
+            {/* 요약 */}
+            <Text numberOfLines={3} style={styles.cardSummary}>
+              {summaryText}
+            </Text>
           </Animated.View>
         </Pressable>
       </Link>
     );
   };
 
-  // ===============================================
-  // 로딩 중
-  // ===============================================
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#333" />
-        <Text style={{ marginTop: 10 }}>최신 기사를 불러오는 중…</Text>
-      </View>
-    );
-  }
-
-  // ===============================================
-  // 실제 UI
-  // ===============================================
   return (
     <View style={{ flex: 1, paddingTop: 80 }}>
       {/* 상단 박스 */}
@@ -206,7 +240,7 @@ export default function Home() {
         </View>
       </View>
 
-      {/* 최신 기사 캐러셀 */}
+      {/* 기사 3장 캐러셀 */}
       <View style={{ marginTop: 40 }}>
         <Text style={styles.sectionTitle}>오늘의 기사</Text>
 
@@ -301,20 +335,49 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: "#333",
   },
-
   card: {
-    width: CARD_WIDTH,
+    height: 500,
     marginRight: CARD_SPACING,
     backgroundColor: "#fff",
     borderRadius: 18,
-    padding: 20,
+    padding: 14,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
     color: "#222",
+    marginBottom: 15,
+  },
+  cardImage: {
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  cardPlaceholder: {
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  placeholderImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "500",
+  },
+  cardSummary: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: "#666",
+    flex: 1,
   },
 });
