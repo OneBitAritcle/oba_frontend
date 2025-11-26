@@ -1,17 +1,12 @@
 {
   "expo": {
-    "name": "oba_frontend",              // 앱 이름 (기기 홈 화면에서 보임)
-    "slug": "oba_frontend",              // Expo 프로젝트 주소/식별자
-    "version": "1.0.0",                  // 앱 버전 (스토어 배포 시 증가)
-    "orientation": "portrait",           // 화면 방향 고정 (세로)
-    "icon": "./assets/images/icon.png",  // 앱 아이콘 경로
-    "scheme": "obafrontend",             // 딥링크 스킴 (ex: obafrontend://...)
-    "userInterfaceStyle": "automatic",   // 시스템 다크/라이트 모드 자동 감지
-    "newArchEnabled": true,              // React Native New Architecture 사용 (Fabric/TurboModules 활성화)
+    "name": "oba_frontend",
+    "slug": "oba_frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["ios", "android", "web"],
+    "scheme": "myapp",
 
-    // --------------------------------------------------
-    // iOS 설정
-    // --------------------------------------------------
     "ios": {
       "supportsTablet": true             // 아이패드에서 앱 지원 여부
     },
