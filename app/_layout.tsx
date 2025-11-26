@@ -3,8 +3,11 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import "react-native-reanimated";
-
 import AppBackground from "./components/AppBackground";
+import { SplashScreen } from "expo-router";
+
+SplashScreen.preventAutoHideAsync();  // 디버그 UI 숨김용
+
 
 const MyTheme = {
   ...DefaultTheme,
@@ -21,12 +24,11 @@ export default function RootLayout() {
         <AppBackground />
 
         <View style={{ flex: 1, backgroundColor: "transparent" }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" }, // 유지
-            }}
-          />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="article" options={{ headerShown: false }} />
+          </Stack>
         </View>
 
         <StatusBar style="auto" />
