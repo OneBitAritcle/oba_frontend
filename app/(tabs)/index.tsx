@@ -1,6 +1,5 @@
 // app/index.tsx
-
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,26 +7,43 @@ import {
   Image,
   StyleSheet,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   Platform,
   Pressable,
   ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
-
-const { width } = Dimensions.get("window");
+import { articles } from "../data/article"; 
 
 // ===============================
 // CONFIG
 // ===============================
-const CARD_WIDTH = width * 0.65;  // 한 장당 65%
-const SIDE_SPACING = (width - CARD_WIDTH * 3) / 2;  // 3장 전체 가운데 배치
 const CARD_SPACING = 10;
 
-// 실제 화면에 카드 3장이 보이도록 Offset 계산
-const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
+function useDynamicDimensions() {
+  const { width } = useWindowDimensions();
+  const CARD_WIDTH = width * 0.65;
+  const SIDE_SPACING = (width - CARD_WIDTH) / 2;
+  const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
+  return { width, CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL };
+}
+
+// 첫 이미지 추출 함수
+const getFirstImage = (content: any): string | null => {
+  if (!Array.isArray(content)) return null;
+  for (const section of content) {
+    for (const line of section) {
+      if (typeof line === "string" && line.startsWith("<img>")) {
+        return line.replace("<img>", "").trim();
+      }
+    }
+  }
+  return null;
+};
 
 export default function Home() {
+  const { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
+  
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -36,102 +52,54 @@ export default function Home() {
     weekday: "short",
   });
 
-  // =============================
-  // ARTICLE DATA
-  // =============================
-  const articles = [
-    {
-      id: 1,
-      title: "AI & 데이터 서밋 2025",
-      bullets: [
-        "AI 산업 확산 전략 공개",
-        "데이터 기반 의사결정 중요성 강조",
-        "기업 경쟁력 핵심 요소로 부상",
-        "AI 인프라 투자 계획 확대",
-        "글로벌 기술 표준 협의 논의",
-      ],
-    },
-    {
-      id: 2,
-      title: "테슬라, 자율주행 완전 상용화 선언",
-      bullets: [
-        "FSD 완전자율 일부 지역 개방",
-        "운전자 개입률 대폭 감소",
-        "도로 데이터 수집 확대",
-        "안전성 검증 진행 중",
-        "글로벌 확장 계획 발표",
-      ],
-    },
-    {
-      id: 3,
-      title: "메타버스 2.0 시대 개막",
-      bullets: [
-        "현실과 디지털 융합 가속화",
-        "차세대 플랫폼 공개",
-        "콘텐츠 생태계 확대",
-        "기업 가상 오피스 도입 증가",
-        "디지털 거버넌스 논의",
-      ],
-    },
-    {
-      id: 4,
-      title: "메타, 차세대 메타버스 비전 발표",
-      bullets: [
-        "AI 기반 상호작용 강화",
-        "창작자 도구 업그레이드",
-        "파트너십 대규모 체결",
-        "글로벌 시장 확대",
-        "교육/업무용 기능 강화",
-      ],
-    },
-    {
-      id: 5,
-      title: "메타버스 플랫폼 경쟁 본격화",
-      bullets: [
-        "대형 플랫폼 경쟁 심화",
-        "사용자 기반 급증",
-        "XR 기술 활용 증가",
-        "콘텐츠 시장 폭발 성장",
-        "자율 경제 시스템 도입",
-      ],
-    },
-  ];
-
-  // Loop용 데이터
-  const loopData = [
-    articles[articles.length - 2],
-    articles[articles.length - 1],
-    ...articles,
-    articles[0],
-    articles[1],
-  ];
+  // Loop용 데이터: 앞뒤 패딩 추가로 무한 루프 구성
+  const loopData =
+    articles.length >= 3
+      ? [
+          ...articles.slice(-2), // 마지막 2개를 앞에 복사
+          ...articles,            // 원본
+          ...articles.slice(0, 2), // 첫 2개를 뒤에 복사
+        ]
+      : new Array(5).fill(articles[0]);
 
   const scrollX = useRef(new Animated.Value(0)).current;
-  const scrollViewRef = useRef(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [index, setIndex] = useState(articles.length >= 2 ? 2 : 0); // 원본 시작점으로 설정
 
-  const [index, setIndex] = useState(2); // 중앙 인덱스(루프 보정)
+  // 초기 로드 시 중앙 위치로 스크롤
+  useEffect(() => {
+    if (scrollViewRef.current && loopData.length > 0) {
+      const startIdx = articles.length >= 2 ? 2 : 0;
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          x: startIdx * SNAP_INTERVAL,
+          animated: false,
+        });
+      }, 100);
+    }
+  }, [SNAP_INTERVAL, loopData.length]);
 
   // =============================
-  // LOOP 처리
+  // LOOP 처리 - 무한 루프 구현
   // =============================
-  const handleScrollEnd = (e) => {
+  const handleScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
     let newIndex = Math.round(offsetX / SNAP_INTERVAL);
 
-    // 루프 앞쪽
-    if (newIndex === 0) {
-      newIndex = articles.length;
-      scrollViewRef.current.scrollTo({
-        x: articles.length * SNAP_INTERVAL,
+    // 앞쪽 패딩 영역에 도달: 뒤쪽으로 이동
+    if (newIndex < articles.length / 2) {
+      newIndex = articles.length + (newIndex % articles.length);
+      scrollViewRef.current?.scrollTo({
+        x: newIndex * SNAP_INTERVAL,
         animated: false,
       });
     }
 
-    // 루프 뒤쪽
-    if (newIndex === loopData.length - 1) {
-      newIndex = 1;
-      scrollViewRef.current.scrollTo({
-        x: SNAP_INTERVAL,
+    // 뒤쪽 패딩 영역에 도달: 앞쪽으로 이동
+    if (newIndex >= articles.length + articles.length / 2) {
+      newIndex = articles.length - (loopData.length - newIndex);
+      scrollViewRef.current?.scrollTo({
+        x: newIndex * SNAP_INTERVAL,
         animated: false,
       });
     }
@@ -139,10 +107,11 @@ export default function Home() {
     setIndex(newIndex);
   };
 
+
   // =============================
   // 카드 컴포넌트
   // =============================
-  const Card = ({ item, cardIndex }) => {
+  const Card = ({ item, cardIndex }: { item: any; cardIndex: number }) => {
     const inputRange = [
       (cardIndex - 1) * SNAP_INTERVAL,
       cardIndex * SNAP_INTERVAL,
@@ -159,28 +128,58 @@ export default function Home() {
       outputRange: [0.4, 1, 0.4],
     });
 
+    const firstImage = Array.isArray(item?.content) ? getFirstImage(item.content) : null;
+    const summaryText = item?.summary ?? "";
+
     return (
       <Link href={`/article/${item.id}`} asChild>
         <Pressable>
           <Animated.View
             style={[
-              styles.card,
+              {
+                width: CARD_WIDTH,
+                height: 400,
+                marginRight: CARD_SPACING,
+                backgroundColor: "#fff",
+                borderRadius: 18,
+                padding: 14,
+                shadowColor: "#000",
+                shadowOpacity: 0.08,
+                shadowRadius: 6,
+              },
               {
                 opacity,
                 transform: [{ scale }],
               },
             ]}
-          >
-            <Text style={styles.cardTitle}>{item.title}</Text>
+          >  
+            {/* 제목 */}
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {item.title}
+            </Text>
 
-            <View style={{ marginTop: 10 }}>
-              {item.bullets.map((b, i) => (
-                <View key={i} style={{ flexDirection: "row", marginBottom: 3 }}>
-                  <Text style={{ marginRight: 6, fontSize: 12 }}>•</Text>
-                  <Text style={{ fontSize: 13, flex: 1 }}>{b}</Text>
-                </View>
-              ))}
-            </View>
+            {/* 이미지 또는 플레이스홀더 */}
+            {firstImage ? (
+              <Image
+                source={{ uri: firstImage }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.cardPlaceholder}>
+                <Image
+                  source={require("../../assets/knight/deliever.png")}
+                  style={styles.placeholderImage}
+                  resizeMode="contain"
+                />
+                <Text style={styles.placeholderText}>이미지가 없습니다.</Text>
+              </View>
+            )}
+
+            {/* 요약 */}
+            <Text numberOfLines={3} style={styles.cardSummary}>
+              {summaryText}
+            </Text>
           </Animated.View>
         </Pressable>
       </Link>
@@ -336,20 +335,49 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: "#333",
   },
-
   card: {
-    width: CARD_WIDTH,
+    height: 500,
     marginRight: CARD_SPACING,
     backgroundColor: "#fff",
     borderRadius: 18,
-    padding: 20,
+    padding: 14,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 6,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
     color: "#222",
+    marginBottom: 15,
+  },
+  cardImage: {
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  cardPlaceholder: {
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  placeholderImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 8,
+  },
+  placeholderText: {
+    fontSize: 12,
+    color: "#999",
+    fontWeight: "500",
+  },
+  cardSummary: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: "#666",
+    flex: 1,
   },
 });
