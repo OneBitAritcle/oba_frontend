@@ -7,6 +7,9 @@ interface Props {
   translateY: any;
   scale: any;
   onPressRoute: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  factor?: number;
 }
 
 export default function PizzaSlice({
@@ -15,14 +18,30 @@ export default function PizzaSlice({
   translateY,
   scale,
   onPressRoute,
+  isOpen,
+  onToggle,
+  factor = 1,
 }: Props) {
+  // slice size scales with screen factor
+  const size = 80 * factor;
+
+  const handlePress = () => {
+    if (isOpen) {
+      router.push(onPressRoute as any);
+    } else {
+      onToggle();
+    }
+  };
+
   return (
-    <Pressable onPress={() => router.push(onPressRoute)}>
+    <Pressable onPress={handlePress}>
       <Animated.Image
         source={source}
         style={[
           styles.slice,
           {
+            width: size,
+            height: size,
             opacity: 1,
             transform: [
               { translateX },
@@ -40,7 +59,5 @@ export default function PizzaSlice({
 const styles = StyleSheet.create({
   slice: {
     position: "absolute",
-    width: 95,
-    height: 95,
   },
 });

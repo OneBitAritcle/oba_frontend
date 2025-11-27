@@ -1,29 +1,44 @@
-import { View, Pressable, Animated, StyleSheet, Image } from "react-native";
+import { View, Pressable, Animated, StyleSheet } from "react-native";
 import usePizzaAnimation from "./usePizzaAnimation";
 import PizzaSlice from "./PizzaSlice";
 
 export default function PizzaMenu() {
   const {
     toggle,
-    scale,
+    halfScale,
+    sliceScale,
     slice1X,
     slice1Y,
     slice2X,
     slice2Y,
     slice3X,
     slice3Y,
+    isOpen,
+    factor,
   } = usePizzaAnimation();
 
+  // responsive sizes
+  const containerSize = 70 * factor;
+  const halfSize = 70 * factor;
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { width: containerSize, height: containerSize },
+      ]}
+    >
 
       {/* 슬라이스 1: MY */}
       <PizzaSlice
         source={require("../../../assets/navi/navi_slice_1.png")}
         translateX={slice1X}
         translateY={slice1Y}
-        scale={scale}
+        scale={sliceScale}
         onPressRoute="/my"
+        isOpen={isOpen}
+        onToggle={toggle}
+        factor={factor}
       />
 
       {/* 슬라이스 2: 리포트 */}
@@ -31,8 +46,11 @@ export default function PizzaMenu() {
         source={require("../../../assets/navi/navi_slice_2.png")}
         translateX={slice2X}
         translateY={slice2Y}
-        scale={scale}
+        scale={sliceScale}
         onPressRoute="/report"
+        isOpen={isOpen}
+        onToggle={toggle}
+        factor={factor}
       />
 
       {/* 슬라이스 3: 틀린문제 */}
@@ -40,15 +58,21 @@ export default function PizzaMenu() {
         source={require("../../../assets/navi/navi_slice_3.png")}
         translateX={slice3X}
         translateY={slice3Y}
-        scale={scale}
+        scale={sliceScale}
         onPressRoute="/report" // 필요시 수정
+        isOpen={isOpen}
+        onToggle={toggle}
+        factor={factor}
       />
 
       {/* 기본 피자 반쪽 - 토글 버튼 */}
       <Pressable onPress={toggle}>
         <Animated.Image
           source={require("../../../assets/navi/navi_half.png")}
-          style={[styles.halfPizza, { transform: [{ scale }] }]}
+          style={[
+            styles.halfPizza,
+            { width: halfSize, height: halfSize, transform: [{ scale: halfScale }] },
+          ]}
           resizeMode="contain"
         />
       </Pressable>
@@ -59,15 +83,15 @@ export default function PizzaMenu() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 40,
-    right: 30,
-    width: 150,
-    height: 150,
+    bottom: 20,
+    right: 10,
+    width: 50,
+    height: 50,
     justifyContent: "center",
     alignItems: "center",
   },
   halfPizza: {
-    width: 110,
-    height: 110,
+    width: 50,
+    height: 50,
   },
 });
