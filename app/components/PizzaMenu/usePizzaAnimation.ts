@@ -38,29 +38,29 @@ export default function usePizzaAnimation() {
   // 이동 거리를 화면 크기에 맞춰 조정
   const slice1X = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-50, -80 * factor],
+    outputRange: [-90, -60 * factor],
   });
   const slice1Y = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-20, -100 * factor],
+    outputRange: [-28, -55 * factor],
   });
 
   const slice2X = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -120 * factor],
+    outputRange: [-116, -100 * factor],
   });
   const slice2Y = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -20 * factor],
+    outputRange: [-23, -50 * factor],
   });
 
   const slice3X = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -50 * factor],
+    outputRange: [-118, -110 * factor],
   });
   const slice3Y = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 95 * factor],
+    outputRange: [22, 0 * factor],
   });
 
   return {

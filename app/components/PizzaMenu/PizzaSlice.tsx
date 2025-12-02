@@ -23,7 +23,7 @@ export default function PizzaSlice({
   factor = 1,
 }: Props) {
   // slice size scales with screen factor
-  const size = 80 * factor;
+  const size = 60 * factor;
 
   const handlePress = () => {
     if (isOpen) {
