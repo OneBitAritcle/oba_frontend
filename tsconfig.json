@@ -1,12 +1,17 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "strict": true,
-    "moduleResolution": "node",
-    "target": "esnext",
-    "allowJs": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@app/*": [
+        "./app/*"
+      ]
+    }
   },
   "extends": "expo/tsconfig.base",
   "include": [
