@@ -9,7 +9,7 @@ interface Props {
   onPressRoute: string;
   isOpen: boolean;
   onToggle: () => void;
-  factor?: number;
+  factor: number;
 }
 
 export default function PizzaSlice({
@@ -20,10 +20,9 @@ export default function PizzaSlice({
   onPressRoute,
   isOpen,
   onToggle,
-  factor = 1,
+  factor,
 }: Props) {
-  // slice size scales with screen factor
-  const size = 60 * factor;
+  const size = 61.5 * factor; // 화면비 일관 적용
 
   const handlePress = () => {
     if (isOpen) {
@@ -42,12 +41,7 @@ export default function PizzaSlice({
           {
             width: size,
             height: size,
-            opacity: 1,
-            transform: [
-              { translateX },
-              { translateY },
-              { scale: scale ?? 1 },
-            ],
+            transform: [{ translateX }, { translateY }, { scale }],
           },
         ]}
         resizeMode="contain"
