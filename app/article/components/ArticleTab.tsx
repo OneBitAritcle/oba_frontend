@@ -1,678 +1,168 @@
-import { useState, useEffect } from "react";
+// app/article/components/ArticleTab.tsx
 
-import { View, Text, ScrollView, StyleSheet, Platform, Image, TouchableOpacity, Dimensions } from "react-native";
-
-
-
-// [이미지 경로] assets/icons 폴더가 프로젝트 최상위에 위치
-
-const iconExpanded = require("../../../assets/icons/toggle_1.png");
-
-const iconCollapsed = require("../../../assets/icons/toggle_2.png");
-
-
-
-// 1. 이미지 비율 자동 조절 컴포넌트
-
-const AutoHeightImage = ({ uri }) => {
-
-  const [aspectRatio, setAspectRatio] = useState(1.5); // 기본비율
-
-
-
-  useEffect(() => {
-
-    if (uri) {
-
-      Image.getSize(uri, (width, height) => {
-
-        if (width > 0 && height > 0) {
-
-          setAspectRatio(width / height);
-
-        }
-
-      }, (error) => {
-
-        console.log("Image size load failed:", error);
-
-      });
-
-    }
-
-  }, [uri]);
-
-
-
-  return (
-
-    <View style={styles.imageContainer}>
-
-      <Image
-
-        source={{ uri }}
-
-        style={[styles.contentImage, { aspectRatio }]}
-
-        resizeMode="contain"
-
-      />
-
-    </View>
-
-  );
-
-};
-
-
+import { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 
 export default function ArticleTab({ article, onMoveToQuiz }) {
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
-  // 1. 토글 상태 관리
-
-  const [isExpanded, setIsExpanded] = useState(false);
-
-
-
-  // 2. 데이터 안전장치
-
-  const categoryList = article.category || [];
-
-  const summaryText = article.summary || null;
-
-  const subtitles = article.subtitle || [];
-
-  const contents = article.content || [];
-
-
-
-  /**
-
-   * 본문 아이템 렌더링 함수
-
-   */
-
-  const renderContentItem = (line, index, olIndex = 0) => {
-
-    const key = `content-${index}`;
-
-
-
-    // 1. 이미지 처리 (<img>URL)
-
+  const renderLine = (line: string, index: number) => {
+    // 1) 이미지
     if (line.startsWith("<img>")) {
-
-      const imageUrl = line.replace("<img>", "").trim();
-
-      return <AutoHeightImage key={key} uri={imageUrl} />;
-
+      const url = line.replace("<img>", "").trim();
+      return (
+        <Image
+          key={index}
+          source={{ uri: url }}
+          style={{ width: "100%", height: 180, borderRadius: 10, marginVertical: 10 }}
+          resizeMode="cover"
+        />
+      );
     }
 
-
-
-    // 2. 순서 없는 리스트 (<ul>)
-
+    // 2) 순서 없는 리스트
     if (line.startsWith("<ul>")) {
-
-      const listText = line.replace("<ul>", "").trim();
-
       return (
-
-        <View key={key} style={styles.listItemContainer}>
-
-          <Text style={styles.bulletPoint}>•</Text>
-
-          <Text style={styles.listItemText}>{listText}</Text>
-
+        <View key={index} style={styles.listItem}>
+          <Text style={styles.bullet}>•</Text>
+          <Text style={styles.listText}>{line.replace("<ul>", "").trim()}</Text>
         </View>
-
       );
-
     }
 
-
-
-    // 3. 순서 있는 리스트 (<ol>)
-
+    // 3) 순서 있는 리스트
     if (line.startsWith("<ol>")) {
-
-      const listText = line.replace("<ol>", "").trim();
-
+      const text = line.replace("<ol>", "").trim();
       return (
-
-        <View key={key} style={styles.listItemContainer}>
-
-          <Text style={styles.numberPoint}>{olIndex}.</Text>
-
-          <Text style={styles.listItemText}>{listText}</Text>
-
+        <View key={index} style={styles.listItem}>
+          <Text style={styles.bullet}>{index + 1}.</Text>
+          <Text style={styles.listText}>{text}</Text>
         </View>
-
       );
-
     }
 
-
-
-    // 4. 일반 텍스트
-
+    // 4) 일반 텍스트
     return (
-
-      <Text key={key} style={styles.content}>
-
+      <Text key={index} style={styles.bodyText}>
         {line}
-
       </Text>
-
     );
-
   };
 
-
-
   return (
+    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* 제목 */}
+      <Text style={styles.title}>{article.title}</Text>
 
-    <ScrollView
+      {/* 메타 정보 */}
+      <Text style={styles.meta}>
+        {article.source} · {article.date}
+      </Text>
 
-      contentContainerStyle={styles.scrollContainer}
-
-      showsVerticalScrollIndicator={false}
-
-    >
-
-      {/* --- 헤더 --- */}
-
-      <View style={styles.headerContainer}>
-
-        <View style={styles.categoryWrapper}>
-
-          <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-
-            {categoryList.map((cat, idx) => (
-
-              <View key={idx} style={styles.categoryChip}>
-
-                <Text style={styles.categoryText}>{cat}</Text>
-
-              </View>
-
-            ))}
-
-          </ScrollView>
-
-        </View>
-
-        <Text style={styles.title}>{article.title}</Text>
-
-        <Text style={styles.meta}>{article.source} · {article.date}</Text>
-
+      {/* 카테고리 */}
+      <View style={styles.categoryRow}>
+        {(article.categories || []).map((c: string, idx: number) => (
+          <View key={idx} style={styles.categoryChip}>
+            <Text style={styles.categoryText}>{c}</Text>
+          </View>
+        ))}
       </View>
 
-
-
-      {/* --- AI 요약 --- */}
-
-      {summaryText && (
-
-        <View style={styles.aiCard}>
-
-          <TouchableOpacity
-
-            activeOpacity={0.7}
-
-            onPress={() => setIsExpanded(!isExpanded)}
-
-            style={styles.aiHeader}
-
-          >
-
-            <Text style={styles.aiTitle}>
-
-              {isExpanded ? "AI 요약 접기" : "AI 요약 보기"}
-
-            </Text>
-
-            <Image
-
-              source={isExpanded ? iconExpanded : iconCollapsed}
-
-              style={styles.toggleIcon}
-
-              resizeMode="contain"
-
-            />
-
-          </TouchableOpacity>
-
-          {isExpanded && (
-
-            <View style={styles.aiBody}>
-
-              <Text style={styles.aiText}>{summaryText}</Text>
-
-            </View>
-
+      {/* 기사 본문 */}
+      {(article.content || []).map((section: any, idx: number) => (
+        <View key={idx} style={styles.section}>
+          {section.subtitle && (
+            <Text style={styles.subtitle}>{section.subtitle}</Text>
           )}
 
+          {(section.body || []).map(renderLine)}
         </View>
+      ))}
 
-      )}
+      {/* 퀴즈 이동 */}
+      <TouchableOpacity style={styles.quizBtn} onPress={onMoveToQuiz}>
+        <Text style={styles.quizBtnText}>퀴즈 풀러 가기 →</Text>
+      </TouchableOpacity>
 
-
-
-      {/* --- 본문 영역 (카드 스타일 적용) --- */}
-
-      <View style={styles.contentCard}>
-
-        {contents.map((sectionLines, index) => {
-
-          const subTitle = subtitles[index];
-
-          const showSubTitle = subTitle && subTitle !== "nosubtitle";
-
-
-
-          // <ol> 번호 계산 로직
-
-          let olCounter = 0;
-
-
-
-          return (
-
-            <View key={index} style={styles.sectionBlock}>
-
-              {/* 소제목 */}
-
-              {showSubTitle && (
-
-                <Text style={styles.sectionTitle}>{subTitle}</Text>
-
-              )}
-
-             
-
-              {/* 본문 내용 매핑 */}
-
-              {Array.isArray(sectionLines) ? (
-
-                sectionLines.map((line, lineIdx) => {
-
-                  if (line.startsWith("<ol>")) {
-
-                    olCounter += 1;
-
-                    return renderContentItem(line, lineIdx, olCounter);
-
-                  } else {
-
-                    olCounter = 0;
-
-                    return renderContentItem(line, lineIdx);
-
-                  }
-
-                })
-
-              ) : (
-
-                <Text style={styles.content}>{sectionLines}</Text>
-
-              )}
-
-            </View>
-
-          );
-
-        })}
-
-
-
-        {/* --- [수정됨] 퀴즈 풀러 가기 버튼 (카드 내부 최하단으로 이동) --- */}
-
-        <View style={styles.buttonContainer}>
-
-          <TouchableOpacity
-
-            style={styles.quizButton}
-
-            onPress={onMoveToQuiz}
-
-            activeOpacity={0.8}
-
-          >
-
-            <Text style={styles.quizButtonText}>퀴즈 풀러 가기 →</Text>
-
-          </TouchableOpacity>
-
-        </View>
-
-
-
-      </View>
-
-
-
-      <View style={{ height: 40 }} />
-
+      <View style={{ height: 60 }} />
     </ScrollView>
-
   );
-
 }
 
-
-
 const styles = StyleSheet.create({
-
-  scrollContainer: {
-
-    backgroundColor: "#F5F6F8",
-
-    flexGrow: 1,
-
+  container: {
+    padding: 18,
   },
-
- 
-
-  // --- 헤더 스타일 ---
-
-  headerContainer: {
-
-    paddingHorizontal: 20,
-
-    paddingTop: 24,
-
-    paddingBottom: 20,
-
-  },
-
-  categoryWrapper: { marginBottom: 10 },
-
-  categoryChip: {
-
-    backgroundColor: "rgba(0,0,0,0.05)",
-
-    paddingHorizontal: 10,
-
-    paddingVertical: 5,
-
-    borderRadius: 6,
-
-    marginRight: 8,
-
-  },
-
-  categoryText: { color: "#555", fontSize: 13, fontWeight: "600" },
-
-  title: { fontSize: 22, fontWeight: "bold", color: "#191F28", lineHeight: 30, marginBottom: 6 },
-
-  meta: { fontSize: 13, color: "#8B95A1" },
-
-
-
-  // --- AI 요약 카드 스타일 ---
-
-  aiCard: {
-
-    backgroundColor: "#FFFFFF",
-
-    marginHorizontal: 16,
-
-    marginBottom: 24,
-
-    borderRadius: 16,
-
-    overflow: "hidden",
-
-    ...Platform.select({
-
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8 },
-
-      android: { elevation: 2 },
-
-    }),
-
-  },
-
-  aiHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, backgroundColor: "#F9FAFB" },
-
-  aiTitle: { fontSize: 15, fontWeight: "700", color: "#4B6EF5" },
-
-  toggleIcon: { width: 35, height: 35 },
-
-  aiBody: { padding: 16, paddingTop: 0, backgroundColor: "#F9FAFB" },
-
-  aiText: { fontSize: 14, lineHeight: 22, color: "#333D4B" },
-
-
-
-  // --- 본문 카드 스타일 ---
-
-  contentCard: {
-
-    backgroundColor: "#FFFFFF", // 흰색 배경
-
-    marginHorizontal: 16,       // 좌우 여백
-
-    borderRadius: 20,           // 둥근 모서리
-
-    padding: 24,                // 내부 패딩
-
-   
-
-    // 그림자 효과
-
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: "#000",
-
-        shadowOffset: { width: 0, height: 4 },
-
-        shadowOpacity: 0.05,
-
-        shadowRadius: 10,
-
-      },
-
-      android: {
-
-        elevation: 3,
-
-      },
-
-    }),
-
-  },
-
-
-
-  sectionBlock: { marginBottom: 24 },
-
-
-
-  // 폰트 크기 계층 구조
-
- 
-
-  // 1. 소제목
-
-  sectionTitle: {
-
-    fontSize: 20,      
-
+  title: {
+    fontSize: 22,
     fontWeight: "700",
-
-    color: "#191F28",
-
-    marginBottom: 12,
-
-    marginTop: 8,
-
-  },
-
-
-
-  // 2. 리스트 아이템
-
-  listItemContainer: {
-
-    flexDirection: 'row',
-
     marginBottom: 8,
-
-    paddingLeft: 4,
-
   },
-
-  bulletPoint: {
-
-    fontSize: 15,
-
-    lineHeight: 26,
-
-    color: "#333D4B",
-
-    marginRight: 8,
-
-    fontWeight: "bold",
-
+  meta: {
+    color: "#777",
+    marginBottom: 10,
   },
-
-  numberPoint: {
-
-    fontSize: 15,
-
-    lineHeight: 26,
-
-    color: "#333D4B",
-
-    marginRight: 8,
-
-    fontWeight: "bold",
-
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
   },
-
-  listItemText: {
-
-    flex: 1,
-
-    fontSize: 15,    
-
-    lineHeight: 26,    
-
-    color: "#333D4B",
-
-    fontWeight: "500",
-
-  },
-
-
-
-  // 3. 본문 텍스트
-
-  content: {
-
-    fontSize: 16,      
-
-    lineHeight: 26,
-
-    color: "#333D4B",
-
-    letterSpacing: -0.2,
-
-    marginBottom: 12,
-
-  },
-
-
-
-  // 이미지 스타일
-
-  imageContainer: {
-
-    marginVertical: 12,
-
-    alignItems: 'center',
-
+  categoryChip: {
+    backgroundColor: "#EFEFEF",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 8,
-
-    overflow: 'hidden',
-
-    width: '100%',    
-
+    marginRight: 6,
+    marginBottom: 6,
   },
-
-  contentImage: {
-
-    width: '100%',    
-
-    backgroundColor: '#eee',
-
+  categoryText: { color: "#444", fontSize: 13 },
+  section: {
+    marginBottom: 26,
   },
-
-
-
-  // --- 퀴즈 버튼 스타일 ---
-
-  buttonContainer: {
-
-    paddingHorizontal: 7, // 카드와 라인 맞춤
-
-    marginTop: 5, // 본문 텍스트와 충분한 간격
-
-    // 내부 패딩 제거 (카드 패딩 사용)
-
-  },
-
-  quizButton: {
-
-    backgroundColor: "#4B6EF5",
-
-    paddingVertical: 12,
-
-    borderRadius: 10,
-
-    alignItems: "center",
-
-    justifyContent: "center",
-
-   
-
-    // 그림자
-
-    ...Platform.select({
-
-      ios: {
-
-        shadowColor: "#4B6EF5",
-
-        shadowOffset: { width: 0, height: 4 },
-
-        shadowOpacity: 0.3,
-
-        shadowRadius: 8,
-
-      },
-
-      android: { elevation: 4 },
-
-    }),
-
-  },
-
-  quizButtonText: {
-
-    color: "#FFFFFF",
-
-    fontSize: 14,
-
+  subtitle: {
+    fontSize: 18,
     fontWeight: "700",
-
+    marginBottom: 8,
   },
-
+  bodyText: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 10,
+    color: "#333",
+  },
+  listItem: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  bullet: {
+    width: 20,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  listText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  quizBtn: {
+    backgroundColor: "#2C6EF2",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  quizBtnText: {
+    color: "white",
+    fontWeight: "700",
+    fontSize: 16,
+  },
 });
-
