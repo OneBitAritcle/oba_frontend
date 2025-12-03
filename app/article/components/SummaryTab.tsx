@@ -1,5 +1,3 @@
-// app/article/components/SummaryTab.tsx
-
 import { ScrollView, Text, StyleSheet } from "react-native";
 
 export default function SummaryTab({ summary }) {
@@ -12,12 +10,6 @@ export default function SummaryTab({ summary }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  text: {
-    fontSize: 16,
-    lineHeight: 25,
-    color: "#333",
-  },
+  container: { padding: 20 },
+  text: { fontSize: 16, lineHeight: 25, color: "#333" },
 });

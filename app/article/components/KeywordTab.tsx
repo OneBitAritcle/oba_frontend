@@ -1,5 +1,3 @@
-// app/article/components/KeywordTab.tsx
-
 import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 
 const pizza = [
@@ -15,12 +13,10 @@ export default function KeywordTab({ keywords }) {
       {keywords.map((item, idx) => (
         <View key={idx} style={styles.box}>
           <View style={styles.row}>
-            <Image
-              source={pizza[idx % pizza.length]}
-              style={styles.icon}
-            />
+            <Image source={pizza[idx % pizza.length]} style={styles.icon} />
             <Text style={styles.word}>{item.word}</Text>
           </View>
+
           <Text style={styles.desc}>{item.desc}</Text>
         </View>
       ))}
@@ -31,30 +27,16 @@ export default function KeywordTab({ keywords }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 18,
-    gap: 14,
-  },
+  container: { padding: 18, gap: 14 },
   box: {
     padding: 16,
     backgroundColor: "white",
     borderRadius: 14,
     elevation: 3,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  icon: {
-    width: 22,
-    height: 22,
-    marginRight: 6,
-  },
-  word: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  row: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  icon: { width: 22, height: 22, marginRight: 6 },
+  word: { fontSize: 16, fontWeight: "700" },
   desc: {
     fontSize: 14,
     color: "#555",

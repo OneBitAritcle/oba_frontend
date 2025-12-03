@@ -1,11 +1,10 @@
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import AppBackground from "../components/AppBackground";
 
-export default function AuthLayout() {
+export default function AuthGroupLayout() {
   return (
-    <>
-      <AppBackground />
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
+    <AppBackground>
+      <Slot />
+    </AppBackground>
   );
 }

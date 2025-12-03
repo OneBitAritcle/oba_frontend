@@ -15,18 +15,16 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-// 응답 인터셉터 → 401이면 refresh 시도
+// 응답 인터셉터
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
 
-    // 이미 refresh 시도했으면 재시도 금지
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
 
       try {
-        // refresh 요청
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
@@ -35,16 +33,12 @@ apiClient.interceptors.response.use(
 
         const newAccess = refreshResponse.data.accessToken;
 
-        // 저장
         await SecureStore.setItemAsync("access_token", newAccess);
-
-        // 기존 요청에 다시 주입
         original.headers.Authorization = `Bearer ${newAccess}`;
 
         return apiClient(original);
       } catch (e) {
-        console.log("❌ Refresh 실패 → 로그인 필요");
-        return Promise.reject(error);
+        console.log("Refresh Token 만료, 재로그인 필요");
       }
     }
 

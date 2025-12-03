@@ -1,11 +1,11 @@
 import { apiClient } from "@/api/apiClient";
 
-export async function fetchWrongArticles() {
+export const fetchWrongArticles = async () => {
   const res = await apiClient.get("/api/my/wrong");
   return res.data;
-}
+};
 
-export async function fetchSolvedArticles() {
+export const fetchSolvedArticles = async () => {
   const res = await apiClient.get("/api/my/solved");
   return res.data;
-}
+};

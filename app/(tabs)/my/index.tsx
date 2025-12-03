@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { fetchUserProfile } from "@/api/user";
 
-
 export default function MyScreen() {
   const [user, setUser] = useState(null);
 

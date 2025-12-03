@@ -26,19 +26,36 @@ export default function QuizTab({ articleId }) {
   return (
     <View>
       {quiz.map((q, idx) => (
-        <View key={idx}>
-          <Text>{q.question}</Text>
+        <View key={idx} style={{ marginBottom: 20 }}>
+          <Text style={{ fontWeight: "700" }}>{q.question}</Text>
 
           {q.options.map((opt: string, i: number) => (
-            <TouchableOpacity key={i} onPress={() => onSelect(idx, i + 1)}>
+            <TouchableOpacity
+              key={i}
+              onPress={() => onSelect(idx, i + 1)}
+              style={{
+                padding: 6,
+                marginTop: 4,
+                borderWidth: 1,
+                borderColor: selected[idx] === i + 1 ? "blue" : "#ccc",
+              }}
+            >
               <Text>{opt}</Text>
             </TouchableOpacity>
           ))}
         </View>
       ))}
 
-      <TouchableOpacity onPress={submit}>
-        <Text>정답 제출</Text>
+      <TouchableOpacity
+        onPress={submit}
+        style={{
+          padding: 12,
+          backgroundColor: "#2C6EF2",
+          alignItems: "center",
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "white", fontWeight: "700" }}>정답 제출</Text>
       </TouchableOpacity>
     </View>
   );

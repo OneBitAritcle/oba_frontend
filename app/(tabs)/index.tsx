@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
   Animated,
-  useWindowDimensions,
+  StyleSheet,
   Pressable,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { Link } from "expo-router";
+import { API_BASE_URL } from "@/constants/config";
 
-// 백엔드 Article 목록 타입
 type ArticleCard = {
   articleId: number;
   title: string;
@@ -32,22 +30,18 @@ function useDynamicDimensions() {
 
 export default function Home() {
   const { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
-
   const [articles, setArticles] = useState<ArticleCard[]>([]);
 
   useEffect(() => {
-    fetch("http://43.200.179.159:9000/articles/latest")
+    fetch(`${API_BASE_URL}/articles/latest`)
       .then((res) => res.json())
-      .then((data) => {
-        // 백엔드 응답 그대로 사용
-        setArticles(data);
-      })
+      .then((data) => setArticles(data))
       .catch(console.error);
   }, []);
 
   if (!articles.length) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={styles.loadingWrap}>
         <Text>로딩 중...</Text>
       </View>
     );
@@ -71,52 +65,6 @@ export default function Home() {
     }, 200);
   }, []);
 
-  const Card = ({ item, cardIndex }: { item: ArticleCard; cardIndex: number }) => {
-    const inputRange = [
-      (cardIndex - 1) * SNAP_INTERVAL,
-      cardIndex * SNAP_INTERVAL,
-      (cardIndex + 1) * SNAP_INTERVAL,
-    ];
-
-    const scale = scrollX.interpolate({
-      inputRange,
-      outputRange: [0.8, 1, 0.8],
-    });
-
-    const opacity = scrollX.interpolate({
-      inputRange,
-      outputRange: [0.4, 1, 0.4],
-    });
-
-    return (
-      <Link href={`/article/${item.articleId}`} asChild>
-        <Pressable>
-          <Animated.View
-            style={[
-              {
-                width: CARD_WIDTH,
-                height: 380,
-                marginRight: CARD_SPACING,
-                backgroundColor: "#fff",
-                borderRadius: 18,
-                padding: 14,
-              },
-              { opacity, transform: [{ scale }] },
-            ]}
-          >
-            <Text style={styles.cardTitle}>{item.title}</Text>
-
-            <Text style={styles.cardSummary}>
-              {item.summaryBullets?.slice(0, 2).join(" · ")}
-            </Text>
-
-            <Text style={styles.cardDate}>{item.servingDate}</Text>
-          </Animated.View>
-        </Pressable>
-      </Link>
-    );
-  };
-
   return (
     <View style={{ flex: 1 }}>
       <View style={{ marginTop: 40 }}>
@@ -135,7 +83,50 @@ export default function Home() {
           )}
         >
           {loopData.map((item, i) => (
-            <Card key={i} item={item} cardIndex={i} />
+            <Link key={i} href={`/article/${item.articleId}`} asChild>
+              <Pressable>
+                <Animated.View
+                  style={[
+                    {
+                      width: CARD_WIDTH,
+                      height: 380,
+                      marginRight: CARD_SPACING,
+                      backgroundColor: "#fff",
+                      borderRadius: 18,
+                      padding: 14,
+                    },
+                    {
+                      opacity: scrollX.interpolate({
+                        inputRange: [
+                          (i - 1) * SNAP_INTERVAL,
+                          i * SNAP_INTERVAL,
+                          (i + 1) * SNAP_INTERVAL,
+                        ],
+                        outputRange: [0.4, 1, 0.4],
+                      }),
+                      transform: [
+                        {
+                          scale: scrollX.interpolate({
+                            inputRange: [
+                              (i - 1) * SNAP_INTERVAL,
+                              i * SNAP_INTERVAL,
+                              (i + 1) * SNAP_INTERVAL,
+                            ],
+                            outputRange: [0.8, 1, 0.8],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <Text style={styles.cardSummary}>
+                    {item.summaryBullets.slice(0, 2).join(" · ")}
+                  </Text>
+                  <Text style={styles.cardDate}>{item.servingDate}</Text>
+                </Animated.View>
+              </Pressable>
+            </Link>
           ))}
         </Animated.ScrollView>
       </View>
@@ -144,28 +135,30 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 14,
+  loadingWrap: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-
-  cardSummary: {
-    color: "#555",
-    fontSize: 14,
-    marginBottom: 20,
-  },
-
-  cardDate: {
-    color: "#777",
-    marginTop: "auto",
-    fontSize: 12,
-  },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     marginLeft: 20,
     marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 14,
+  },
+  cardSummary: {
+    color: "#555",
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  cardDate: {
+    color: "#777",
+    marginTop: "auto",
+    fontSize: 12,
   },
 });

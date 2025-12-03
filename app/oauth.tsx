@@ -1,17 +1,28 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect } from "react";
-import { saveToken } from "@/api/auth";
+import { Slot, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
 
-export default function OAuthScreen() {
+export default function RootLayout() {
   const router = useRouter();
-  const { access, refresh } = useLocalSearchParams();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!access || !refresh) return;
+    async function init() {
+      const token = await SecureStore.getItemAsync("accessToken");
 
-    saveToken(access as string, refresh as string)
-      .then(() => router.replace("/")); // 홈 이동
-  }, [access, refresh]);
+      if (token) {
+        router.replace("/(tabs)/my");
+      } else {
+        router.replace("/(auth-group)/login");
+      }
 
-  return null;
+      setLoading(false);
+    }
+
+    init();
+  }, []);
+
+  if (loading) return null;
+
+  return <Slot />;
 }

@@ -5,7 +5,7 @@ export default function AppBackground() {
     <View
       style={[
         StyleSheet.absoluteFill,
-        { position: "absolute", backgroundColor: "#F5FAFF" }
+        { position: "absolute", backgroundColor: "#F5FAFF" },
       ]}
       pointerEvents="none"
     >
