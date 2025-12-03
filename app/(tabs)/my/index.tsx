@@ -27,7 +27,7 @@ type UserProfile = {
 };
 
 type HistoryItem = {
-  article_id: bigint;
+  article_id: number; // bigint는 JS에서 number나 string으로 처리됨 
   serving_date: string; // 
   title: string;
   category_name: string;
