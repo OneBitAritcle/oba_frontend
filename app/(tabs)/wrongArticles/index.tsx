@@ -2,14 +2,12 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  TextInput,
   Alert,
+  FlatList,
   ActivityIndicator,
-  
+  RefreshControl,
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -19,26 +17,30 @@ import { Ionicons } from "@expo/vector-icons";
 // ---------------------------------------------------------
 // 1. 데이터 타입 정의 (백엔드와 약속한 데이터 모양)
 // ---------------------------------------------------------
-type UserProfile = {
-  nickname: string;
-  email: string;
-  profileImage: any; // 실제로는 string (URL) 이겠지만 지금은 require()를 쓰므로 any
-};
+// (마이페이지 제거) UserProfile 타입 제거
 
+type HistoryItem = {
+  article_id: number; // bigint는 JS에서 number나 string으로 처리됨 
+  serving_date: string; // 
+  title: string;
+  category_name: string;
+  isWrong: boolean;
+};
 
 export default function MyPage() {
   const router = useRouter();
-
   // ---------------------------------------------------------
   // 상태 관리 (State)
   // ---------------------------------------------------------
-  // 유저 정보 상태 (초기값은 null 또는 빈 값)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // 타임라인 데이터 상태
+  const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // 닉네임 수정 팝업 관련 상태
-  const [modalVisible, setModalVisible] = useState(false);
-  const [inputText, setInputText] = useState("");
+  // 필터/정렬 상태
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   // ---------------------------------------------------------
   // 데이터 통합 요청 (Promise.all 활용)
@@ -51,27 +53,36 @@ export default function MyPage() {
       //   apiClient.get("/my/wrong-answers")
       // ]);
 
-      console.log("[Client] 유저 정보를 요청합니다...");
+      console.log("[Client] 유저 정보와 타임라인 데이터를 동시에 요청합니다...");
 
       // 👇 [테스트용] 백엔드 응답 시간 시뮬레이션 (1초 대기)
       // Promise.all을 쓰면 두 요청이 '병렬'로 진행되어 더 빠릅니다.
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // 1. 가짜 유저 데이터 도착
-      const mockUser: UserProfile = {
-        nickname: "김제니",
-        email: "hwimin@kakao.com",
-        profileImage: require("../../../assets/knight/basic_profile.png"),
-      };
+      // (테스트용) 유저 mock 제거 — 마이페이지 기능 제외
 
-      // 상태 한 번에 업데이트 (마이 페이지는 프로필 전용)
-      setUserProfile(mockUser);
+      // 2. 가짜 타임라인 데이터 도착
+      const mockHistory: HistoryItem[] = [
+        { article_id: 1, serving_date: "2025.03.10", title: "전기차 배터리 기술의 새로운 돌파구, 충전 시간 10분으로 단축", category_name: "Tech News", isWrong: true },
+        { article_id: 2, serving_date: "2025.03.08", title: "AI가 의료 진단 정확도 95%까지 향상시켰다", category_name: "Health Daily", isWrong: true },
+        { article_id: 3, serving_date: "2025.03.05", title: "“AI 에이전트는 아직 ‘말 없는 마차’ 수준…완전한 자율화는 먼 미래”", category_name: "Environment Weekly", isWrong: true },
+        { article_id: 4, serving_date: "2025.03.05", title: "AI 시대에도 ‘개방성’이 힘을 가질까?", category_name: "Environment Weekly", isWrong: true },
+        { article_id: 5, serving_date: "2025.03.03", title: "보안 행동과 인식 수준을 높이는 핵심 전략 ‘공감 기반 정책 엔지니어링’", category_name: "Environment Weekly", isWrong: true },
+      ];
+
+      // 상태 한 번에 업데이트
+      setHistoryData(mockHistory);
+
+      // 카테고리 목록 구성 (중복 제거) + 'All' 포함
+      const cats = Array.from(new Set(mockHistory.map((h) => h.category_name)));
+      setCategories(["All", ...cats]);
 
     } catch (error) {
       console.error("데이터 로딩 실패:", error);
       Alert.alert("오류", "데이터를 불러오지 못했습니다.");
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -79,64 +90,75 @@ export default function MyPage() {
     fetchAllData();
   }, []);
 
-  // 간단한 새로고침 핸들러 (history 제거로 refreshControl 미사용)
   const onRefresh = () => {
+    setRefreshing(true);
     fetchAllData();
   };
 
   // ---------------------------------------------------------
-  // 닉네임 수정 로직
-  // ---------------------------------------------------------
-  const openEditModal = () => {
-    if (!userProfile) return;
-    setInputText(userProfile.nickname);
-    setModalVisible(true);
-  };
-
-  const handleSaveNickname = async () => {
-    if (inputText.trim() === "") {
-      Alert.alert("알림", "닉네임을 입력해주세요.");
-      return;
-    }
-    try {
-      console.log(`[서버 전송] 닉네임 변경 요청: ${inputText}`);
-      // await apiClient.post("/user/nickname", { nickname: inputText });
-      
-      // 화면 즉시 반영 (낙관적 업데이트)
-      setUserProfile((prev) => prev ? { ...prev, nickname: inputText } : null);
-      setModalVisible(false);
-      Alert.alert("성공", "닉네임이 수정되었습니다.");
-    } catch (error) {
-      Alert.alert("오류", "닉네임 수정 실패");
-    }
-  };
-
-  // ---------------------------------------------------------
-  // 프로필 카드 렌더러 (My 페이지 전용)
+  // 리스트 헤더 (필터 + 정렬 포함)
   // ---------------------------------------------------------
   const renderHeader = () => {
-    if (!userProfile) return null;
-
     return (
       <View style={styles.headerSection}>
-        <TouchableOpacity style={styles.trendyCard} activeOpacity={0.9} onPress={openEditModal}>
-          <View style={styles.profileLeft}>
-            <Image source={userProfile.profileImage} style={styles.trendyImage} />
-          </View>
+        <View style={styles.timelineHeader}>
+          <Text style={styles.sectionTitle}>틀린 기사 다시보기</Text>
+          <Text style={styles.sectionSubtitle}>최근 1년의 기사를 확인하세요</Text>
+        </View>
 
-          <View style={styles.profileRight}>
-            <View style={styles.nameRow}>
-              <Text style={styles.userName}>{userProfile.nickname}</Text>
-              <Ionicons name="pencil" size={16} color="#999" />
-            </View>
-            <Text style={styles.userId}>{userProfile.email}</Text>
-          </View>
-        </TouchableOpacity>
+        {/* 필터 및 정렬 바 */}
+        <View style={styles.filterBar}>
+          <FlatList
+            data={categories}
+            horizontal
+            keyExtractor={(c) => c}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.categoryBtn, selectedCategory === item && styles.categoryBtnActive]}
+                onPress={() => setSelectedCategory(item)}
+              >
+                <Text style={[styles.categoryText, selectedCategory === item && styles.categoryTextActive]}>{item}</Text>
+              </TouchableOpacity>
+            )}
+          />
+
+          <TouchableOpacity
+            style={styles.sortBtn}
+            onPress={() => setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))}
+          >
+            <Ionicons name={sortOrder === "newest" ? "arrow-down" : "arrow-up"} size={18} color="#007AFF" />
+            <Text style={styles.sortText}>{sortOrder === "newest" ? "최신순" : "오래된 순"}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
-  // (틀린기사 리스트 제거)
+  // ---------------------------------------------------------
+  // 리스트 아이템 (타임라인 줄 한 칸)
+  // ---------------------------------------------------------
+  const renderItem = ({ item }: { item: HistoryItem }) => (
+    <View style={styles.timelineItem}>
+      {/* 왼쪽 라인 & 점 */}
+      <View style={styles.timelineLeft}>
+        <View style={styles.line} />
+        <View style={styles.dot} />
+      </View>
+
+      {/* 오른쪽 카드 내용 */}
+      <View style={styles.timelineRight}>
+        <Text style={styles.dateText}>{item.serving_date}</Text>
+        <TouchableOpacity 
+          style={styles.articleCard} 
+          onPress={() => router.push(`/article/${item.article_id}`)}
+        >
+          <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.articleCategory}>{item.category_name}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   // ---------------------------------------------------------
   // 메인 렌더링
@@ -149,37 +171,37 @@ export default function MyPage() {
           <Text style={styles.loadingText}>정보를 불러오는 중...</Text>
         </View>
       ) : (
-        <View style={{ flex: 1 }}>
-          {renderHeader()}
-          <View style={{ paddingHorizontal: 24, paddingTop: 12 }}>
-            <Text style={{ color: '#8E8E93' }}>내 정보 및 설정을 확인하세요.</Text>
-          </View>
-        </View>
+        <FlatList
+          data={
+            // 카테고리 필터 적용
+            historyData
+              .filter((h) => selectedCategory === "All" ? true : h.category_name === selectedCategory)
+              .sort((a, b) => {
+                // serving_date 형식: YYYY.MM.DD -> 비교를 위해 YYYYMMDD로 변환
+                const norm = (s: string) => s.replace(/\./g, "");
+                const ad = parseInt(norm(a.serving_date));
+                const bd = parseInt(norm(b.serving_date));
+                return sortOrder === "newest" ? bd - ad : ad - bd;
+              })
+          }
+          renderItem={renderItem}
+          keyExtractor={(item) => item.article_id.toString()}
+
+          // 헤더: 제목 + 필터바
+          ListHeaderComponent={renderHeader}
+          
+          contentContainerStyle={styles.listContentContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>틀린 문제가 없습니다 🎉</Text>
+            </View>
+          }
+        />
       )}
 
-      {/* 닉네임 수정 모달 (리스트 밖에 배치) */}
-      <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>닉네임 수정</Text>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="새로운 닉네임을 입력하세요"
-              autoFocus={true}
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSaveNickname}>
-                <Text style={styles.saveText}>저장</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* (마이페이지 제거) 닉네임 수정 모달 제거됨 */}
     </View>
   );
 }
@@ -243,6 +265,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", marginBottom: 6 },
   sectionSubtitle: { fontSize: 14, color: "#8E8E93", marginBottom: 20 },
+
+  // 필터/정렬 바
+  filterBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
+  categoryBtn: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: "#fff", borderRadius: 20, borderWidth: 1, borderColor: "#ECEFF5", marginRight: 8 },
+  categoryBtnActive: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
+  categoryText: { fontSize: 13, color: "#333" },
+  categoryTextActive: { color: "#fff", fontWeight: "700" },
+  sortBtn: { flexDirection: "row", alignItems: "center", padding: 8, marginLeft: 8 },
+  sortText: { marginLeft: 6, color: "#007AFF", fontWeight: "600" },
 
   // --- 3. 타임라인 아이템 (리스트 내부) ---
   timelineItem: {
