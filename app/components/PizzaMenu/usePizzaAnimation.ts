@@ -5,7 +5,7 @@ export default function usePizzaAnimation() {
   const anim = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
 
-  // 🔥 화면비 정규화 인자 — 모든 크기/거리 계산의 기준!
+  // 아이폰 미니 기준 스케일
   const factor = Math.min(width, height) / 390;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -22,28 +22,29 @@ export default function usePizzaAnimation() {
     }).start();
   };
 
-  // ================================
-  // 🔥 닫힌 상태 좌표 (네가 만든 값 기준)
-  // ================================
+  /* -------------------------------
+   * 닫힌 상태: 기존 값 그대로
+   * ----------------------------- */
   const CLOSED = {
-    slice1: { x: -38 * factor, y: -12.4 * factor },
-    slice2: { x: -49.2 * factor, y: -10.2 * factor },
-    slice3: { x: -49.7 * factor, y: 9 * factor },
+    slice1: { x: -21.8 * factor, y: -16.8 * factor },
+    slice2: { x: -36.9 * factor, y: -14.4 * factor },
+    slice3: { x: -41.8 * factor, y: 4.7 * factor },
   };
 
-  // ================================
-  // 🔥 열린 상태 좌표 (비율 기반으로 재정규화)
-  //    → 여기 값만 너가 조절하면 됨
-  // ================================
+  /* -------------------------------
+   * 열린 상태: 확실한 부채꼴로 재배치
+   *
+   *  - slice1: 위쪽 왼쪽
+   *  - slice2: 정면 왼쪽
+   *  - slice3: 아래 왼쪽
+   * ----------------------------- */
   const OPEN = {
-    slice1: { x: -42 * factor, y: -30 * factor },
-    slice2: { x: -62 * factor, y: -22 * factor },
-    slice3: { x: -65 * factor, y: 10 * factor },
+    slice1: { x: -25.8 * factor, y: -34.4 * factor }, // 위로 확실히 올림
+    slice2: { x: -49.7 * factor, y: -26.2 * factor },  // 가운데, 가장 왼쪽
+    slice3: { x: -56.9 * factor, y: 5.3 * factor },  // 아래로 내림
   };
 
-  // ================================
-  // 🔥 조각 이동 애니메이션
-  // ================================
+  // 슬라이스 1
   const slice1X = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [CLOSED.slice1.x, OPEN.slice1.x],
@@ -53,6 +54,7 @@ export default function usePizzaAnimation() {
     outputRange: [CLOSED.slice1.y, OPEN.slice1.y],
   });
 
+  // 슬라이스 2
   const slice2X = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [CLOSED.slice2.x, OPEN.slice2.x],
@@ -62,6 +64,7 @@ export default function usePizzaAnimation() {
     outputRange: [CLOSED.slice2.y, OPEN.slice2.y],
   });
 
+  // 슬라이스 3
   const slice3X = anim.interpolate({
     inputRange: [0, 1],
     outputRange: [CLOSED.slice3.x, OPEN.slice3.x],
@@ -71,12 +74,10 @@ export default function usePizzaAnimation() {
     outputRange: [CLOSED.slice3.y, OPEN.slice3.y],
   });
 
-  // ================================
-  // 🔥 크기 애니메이션 (닫혔을 때 OK)
-  // ================================
+  // 반쪽 피자 / 슬라이스 스케일
   const halfScale = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.08], // 그대로 둠
+    outputRange: [1, 1.08],
   });
 
   const sliceScale = anim.interpolate({
@@ -88,8 +89,8 @@ export default function usePizzaAnimation() {
     toggle,
     isOpen,
     factor,
+    anim,
     halfScale,
-
     sliceScale,
     slice1X,
     slice1Y,

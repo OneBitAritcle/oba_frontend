@@ -1,3 +1,4 @@
+// app/components/PizzaMenu/index.tsx
 import { View, Pressable, Animated, StyleSheet } from "react-native";
 import usePizzaAnimation from "./usePizzaAnimation";
 import PizzaSlice from "./PizzaSlice";
@@ -15,9 +16,9 @@ export default function PizzaMenu() {
     slice3Y,
     isOpen,
     factor,
+    anim,
   } = usePizzaAnimation();
 
-  // responsive sizes
   const containerSize = 70 * factor;
   const halfSize = 70 * factor;
 
@@ -28,8 +29,7 @@ export default function PizzaMenu() {
         { width: containerSize, height: containerSize },
       ]}
     >
-
-      {/* 슬라이스 1: MY */}
+      {/* 슬라이스 1: 마이 */}
       <PizzaSlice
         source={require("../../../assets/navi/navi_slice_1.png")}
         translateX={slice1X}
@@ -39,6 +39,9 @@ export default function PizzaMenu() {
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
+        anim={anim}
+        label="마이"
+        labelOffsetY={-25}
       />
 
       {/* 슬라이스 2: 리포트 */}
@@ -51,6 +54,9 @@ export default function PizzaMenu() {
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
+        anim={anim}
+        label="리포트"
+        labelOffsetY={-8}
       />
 
       {/* 슬라이스 3: 틀린문제 */}
@@ -59,10 +65,13 @@ export default function PizzaMenu() {
         translateX={slice3X}
         translateY={slice3Y}
         scale={sliceScale}
-        onPressRoute="/report" // 필요시 수정
+        onPressRoute="/report"
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
+        anim={anim}
+        label="틀린문제"
+        labelOffsetY={0}
       />
 
       {/* 기본 피자 반쪽 - 토글 버튼 */}
@@ -71,7 +80,11 @@ export default function PizzaMenu() {
           source={require("../../../assets/navi/navi_half.png")}
           style={[
             styles.halfPizza,
-            { width: halfSize, height: halfSize, transform: [{ scale: halfScale }] },
+            {
+              width: halfSize,
+              height: halfSize,
+              transform: [{ scale: halfScale }],
+            },
           ]}
           resizeMode="contain"
         />
