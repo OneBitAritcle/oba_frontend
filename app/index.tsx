@@ -3,7 +3,7 @@ import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { jwtDecode } from "jwt-decode";   // ← 이것만 바꾸면 해결됨!
+import jwtDecode from "jwt-decode";
 
 // JWT exp 필드 체크용 타입
 type DecodedToken = {
@@ -30,6 +30,7 @@ export default function Index() {
       const access = await SecureStore.getItemAsync("accessToken");
       console.log("🔑 저장된 accessToken:", access);
 
+      // 저장된 토큰 자체가 없으면 → 로그인 X
       if (!access) {
         console.log("❌ AccessToken 없음 → 로그인 필요");
         setChecked(true);
@@ -67,13 +68,16 @@ export default function Index() {
     checkLogin();
   }, []);
 
+  // 라우팅 판단 전 준비 중
   if (!checked) return null;
 
+  // 로그인 안 되어 있으면 (auth)/login 이동
   if (!loggedIn) {
     console.log("➡️ Redirect → (auth)/login");
     return <Redirect href="/(auth)/login" />;
   }
 
+  // 로그인 되어 있으면 탭으로 이동
   console.log("➡️ Redirect → (tabs)");
   return <Redirect href="/(tabs)" />;
 }

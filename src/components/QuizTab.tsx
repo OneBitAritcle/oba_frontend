@@ -41,11 +41,12 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
     })),
   ).current
 
+  // ⭐ 올바른 이미지 경로 수정
   const pizzaImages = [
-    require("../../../assets/pizza/comb.png"),
-    require("../../../assets/pizza/hwaa.png"),
-    require("../../../assets/pizza/mar.png"),
-    require("../../../assets/pizza/pep.png"),
+    require("../../assets/pizza/comb.png"),
+    require("../../assets/pizza/hwaa.png"),
+    require("../../assets/pizza/mar.png"),
+    require("../../assets/pizza/pep.png"),
   ]
 
   const totalCount = quizList.length
@@ -102,9 +103,6 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
     )
 
     const sparkleAnimations = sparkleAnims.map((anim, index) => {
-      const angle = (index / sparkleAnims.length) * Math.PI * 2
-      // const distance = 100 + Math.random() * 80
-
       return Animated.sequence([
         Animated.delay(Math.random() * 200),
         Animated.parallel([
@@ -157,7 +155,6 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
       let finalX, finalY, duration, delay
 
       if (pattern === 0) {
-        // Circular explosion
         const angle = (index / 25) * Math.PI * 2
         const distance = 180 + Math.random() * 150
         finalX = Math.cos(angle) * distance
@@ -165,13 +162,11 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
         duration = 1000 + Math.random() * 500
         delay = 0
       } else if (pattern === 1) {
-        // Fountain upward
         finalX = (Math.random() - 0.5) * 250
         finalY = -250 - Math.random() * 200
         duration = 1200 + Math.random() * 600
         delay = 50
       } else if (pattern === 2) {
-        // Spiral
         const angle = (index / 25) * Math.PI * 6
         const distance = (index % 25) * 12 + 100
         finalX = Math.cos(angle) * distance
@@ -179,20 +174,17 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
         duration = 1100 + Math.random() * 500
         delay = (index % 25) * 15
       } else if (pattern === 3) {
-        // Wide random burst
         finalX = (Math.random() - 0.5) * 500
         finalY = (Math.random() - 0.5) * 500
         duration = 800 + Math.random() * 600
         delay = Math.random() * 200
       } else if (pattern === 4) {
-        // Diagonal streaks
         const direction = Math.random() > 0.5 ? 1 : -1
         finalX = direction * (200 + Math.random() * 200)
         finalY = -150 - Math.random() * 150
         duration = 1000 + Math.random() * 400
         delay = Math.random() * 250
       } else {
-        // Radial burst outward
         const angle = Math.random() * Math.PI * 2
         const distance = 150 + Math.random() * 180
         finalX = Math.cos(angle) * distance
@@ -247,72 +239,11 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
     Animated.parallel([...ringAnimations, ...sparkleAnimations, ...confettiAnimations]).start()
   }
 
-  const triggerPizzaConfetti = () => {
-    pizzaConfettiAnims.forEach((anim) => {
-      anim.translateY.setValue(0)
-      anim.translateX.setValue(0)
-      anim.rotate.setValue(0)
-      anim.opacity.setValue(0)
-      anim.scale.setValue(0)
-    })
-
-    const pizzaAnimations = pizzaConfettiAnims.map((anim, index) => {
-      const angle = (index / pizzaConfettiAnims.length) * Math.PI * 2
-      const distance = 150 + Math.random() * 120
-      const finalX = Math.cos(angle) * distance
-      const finalY = Math.sin(angle) * distance - 50
-      const duration = 1200 + Math.random() * 400
-      const randomRotation = Math.random() * 720 - 360
-
-      return Animated.sequence([
-        Animated.delay(Math.random() * 150),
-        Animated.parallel([
-          Animated.spring(anim.scale, {
-            toValue: 1,
-            friction: 3,
-            tension: 40,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.opacity, {
-            toValue: 1,
-            duration: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.translateX, {
-            toValue: finalX,
-            duration: duration,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.translateY, {
-            toValue: finalY,
-            duration: duration,
-            easing: Easing.bezier(0.33, 1, 0.68, 1),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim.rotate, {
-            toValue: randomRotation,
-            duration: duration,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(anim.opacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ])
-    })
-
-    Animated.parallel(pizzaAnimations).start()
-  }
-
   useEffect(() => {
     if (totalCount > 0 && gradedCount === totalCount) {
       setShowResult(true)
       if (correctCount === totalCount) {
-        triggerPizzaConfetti()
+        triggerConfetti()
       }
     }
   }, [gradedCount, totalCount])
@@ -334,7 +265,7 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
       return {
         emoji: "😓",
         title: "아쉬워요",
-        desc: `${totalCount}문제 중 ${correctCount}개를 맞혔어요.\n다음엔 따끈한 피자에 더 가까워질 거예요! 🍕😊`,
+        desc: `${totalCount}문제 중 ${correctCount}개를 맞혔어요.\n다음엔 더 가까워질 거예요! 🍕😊`,
       }
     }
   }
@@ -400,11 +331,12 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
               {graded && (
                 <View style={styles.explanationWrapper}>
                   <TouchableOpacity onPress={() => toggleOpen(qIndex)}>
+                    {/* ⭐ toggle 이미지 경로 수정 완료 */}
                     <Image
                       source={
                         open
-                          ? require("../../../assets/icons/toggle_1.png")
-                          : require("../../../assets/icons/toggle_2.png")
+                          ? require("../../assets/icons/toggle_1.png")
+                          : require("../../assets/icons/toggle_2.png")
                       }
                       style={styles.pizzaIcon}
                     />

@@ -6,11 +6,8 @@ import { View, Text, ScrollView, StyleSheet, Platform, Image, TouchableOpacity, 
 
 // [이미지 경로] assets/icons 폴더가 프로젝트 최상위에 위치
 
-const iconExpanded = require("../../../assets/icons/toggle_1.png");
-
-const iconCollapsed = require("../../../assets/icons/toggle_2.png");
-
-
+const iconExpanded = require("../../assets/icons/toggle_1.png");
+const iconCollapsed = require("../../assets/icons/toggle_2.png");
 
 // 1. 이미지 비율 자동 조절 컴포넌트
 

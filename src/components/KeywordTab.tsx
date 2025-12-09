@@ -3,10 +3,10 @@ import { View, Text, StyleSheet, ScrollView, Image } from "react-native";
 // 🍕 pizza 이미지 7개 불러오기 
 // 리액트 네이티브는 “동적 require” x > 배열로 전부 불러와야 함.
 const pizzaImages = [
-  require("../../../assets/pizza/comb.png"),
-  require("../../../assets/pizza/hwaa.png"),
-  require("../../../assets/pizza/mar.png"),
-  require("../../../assets/pizza/pep.png"),
+  require("../../assets/pizza/comb.png"),
+  require("../../assets/pizza/hwaa.png"),
+  require("../../assets/pizza/mar.png"),
+  require("../../assets/pizza/pep.png"),
 ];
 
 

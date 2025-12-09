@@ -2,14 +2,14 @@ import { useState } from "react";
 import { View, Text } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
-import TabBar from "./components/TabBar";
-import ArticleTab from "./components/ArticleTab";
-import SummaryTab from "./components/SummaryTab";
-import KeywordTab from "./components/KeywordTab";
-import QuizTab from "./components/QuizTab";
+import TabBar from "../../src/components/TabBar";
+import ArticleTab from "../../src/components/ArticleTab";
+import SummaryTab from "../../src/components/SummaryTab";
+import KeywordTab from "../../src/components/KeywordTab";
+import QuizTab from "../../src/components/QuizTab";
 
 // 데이터 저장소에서 article/quiz 불러오기
-import { getArticleById, getQuizById } from "../data/article";
+import { getArticleById, getQuizById } from "../../src/data/article";
 
 export default function ArticleDetail() {
   const router = useRouter();

@@ -1,16 +1,17 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import "react-native-reanimated";
 
-import AppBackground from "./components/AppBackground";
+import * as Linking from "expo-linking";
+import AppBackground from "../src/components/AppBackground";
 
 const MyTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "transparent",  // 🔥 Theme 기본 배경 투명화
+    background: "transparent",
   },
 };
 
@@ -20,11 +21,12 @@ export default function RootLayout() {
       <View style={{ flex: 1, backgroundColor: "transparent" }}>
         <AppBackground />
 
-        <View style={{ flex: 1, backgroundColor: "transparent" }}>
+        <View style={{ flex: 1 }}>
           <Stack
+            initialRouteName="index"  // 🔥 로그인 체크 화면을 첫번째로 강제 등록
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: "transparent" }, // 유지
+              contentStyle: { backgroundColor: "transparent" },
             }}
           />
         </View>
