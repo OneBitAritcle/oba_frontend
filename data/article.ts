@@ -1,4 +1,4 @@
-// app/data/article.ts
+//data/article.ts
 
 export const articles = [
     {

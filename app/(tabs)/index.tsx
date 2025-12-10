@@ -12,8 +12,9 @@ import {
   ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
-import { articles } from "../data/article";
+import { articles } from "../../data/article";
 import PizzaMenu from "../components/PizzaMenu";
+// 추가하기
 
 // ===============================
 // CONFIG

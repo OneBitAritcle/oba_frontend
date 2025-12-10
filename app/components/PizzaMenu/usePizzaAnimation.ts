@@ -26,9 +26,9 @@ export default function usePizzaAnimation() {
    * 닫힌 상태: 기존 값 그대로
    * ----------------------------- */
   const CLOSED = {
-    slice1: { x: -21.8 * factor, y: -16.8 * factor },
-    slice2: { x: -36.9 * factor, y: -14.4 * factor },
-    slice3: { x: -41.8 * factor, y: 4.7 * factor },
+    slice1: { x: -7.5 * factor, y: -17.1 * factor },
+    slice2: { x: -18.4 * factor, y: -14.8 * factor },
+    slice3: { x: -19.2 * factor, y: 4.8 * factor },
   };
 
   /* -------------------------------
@@ -39,9 +39,9 @@ export default function usePizzaAnimation() {
    *  - slice3: 아래 왼쪽
    * ----------------------------- */
   const OPEN = {
-    slice1: { x: -25.8 * factor, y: -34.4 * factor }, // 위로 확실히 올림
-    slice2: { x: -49.7 * factor, y: -26.2 * factor },  // 가운데, 가장 왼쪽
-    slice3: { x: -56.9 * factor, y: 5.3 * factor },  // 아래로 내림
+    slice1: { x: -13.8 * factor, y: -34.4 * factor }, // 위로 확실히 올림
+    slice2: { x: -35.7 * factor, y: -26.2 * factor },  // 가운데, 가장 왼쪽
+    slice3: { x: -38.0 * factor, y: 5.3 * factor },  // 아래로 내림
   };
 
   // 슬라이스 1

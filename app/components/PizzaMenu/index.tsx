@@ -41,7 +41,10 @@ export default function PizzaMenu() {
         factor={factor}
         anim={anim}
         label="마이"
-        labelOffsetY={-25}
+        sliceTouchScale={0.5}
+        sliceSize={60}
+        labelOffsetX={-10}
+        labelOffsetY={-30}
       />
 
       {/* 슬라이스 2: 리포트 */}
@@ -56,7 +59,11 @@ export default function PizzaMenu() {
         factor={factor}
         anim={anim}
         label="리포트"
-        labelOffsetY={-8}
+        sliceTouchScale={0.5}
+        sliceSize={62.5}
+        sliceRotation={0.3}
+        labelOffsetX={-33}
+        labelOffsetY={-15}
       />
 
       {/* 슬라이스 3: 틀린문제 */}
@@ -71,6 +78,10 @@ export default function PizzaMenu() {
         factor={factor}
         anim={anim}
         label="틀린문제"
+        sliceTouchScale={0.5}
+        sliceSize={63}
+        sliceRotation={0.5}
+        labelOffsetX={-43}
         labelOffsetY={0}
       />
 
