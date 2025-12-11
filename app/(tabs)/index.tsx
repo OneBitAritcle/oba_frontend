@@ -1,4 +1,4 @@
-// app/index.tsx
+// app/(tabs)/index.tsx
 import { useRef, useState, useEffect } from "react";
 import {
   View,
@@ -8,12 +8,13 @@ import {
   StyleSheet,
   Animated,
   useWindowDimensions,
-  Platform,
   Pressable,
   ScrollView,
 } from "react-native";
 import { Link } from "expo-router";
-import { articles } from "../data/article"; 
+import { articles } from "../../data/article";
+import PizzaMenu from "../components/PizzaMenu";
+// 추가하기
 
 // ===============================
 // CONFIG
@@ -25,10 +26,10 @@ function useDynamicDimensions() {
   const CARD_WIDTH = width * 0.65;
   const SIDE_SPACING = (width - CARD_WIDTH) / 2;
   const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
-  return { width, CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL };
+  return { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL };
 }
 
-// 첫 이미지 추출 함수
+// 첫 이미지 추출
 const getFirstImage = (content: any): string | null => {
   if (!Array.isArray(content)) return null;
   for (const section of content) {
@@ -43,7 +44,7 @@ const getFirstImage = (content: any): string | null => {
 
 export default function Home() {
   const { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
-  
+
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
     year: "numeric",
@@ -52,21 +53,17 @@ export default function Home() {
     weekday: "short",
   });
 
-  // Loop용 데이터: 앞뒤 패딩 추가로 무한 루프 구성
+  // 캐러셀용 무한 루프 데이터 구성
   const loopData =
     articles.length >= 3
-      ? [
-          ...articles.slice(-2), // 마지막 2개를 앞에 복사
-          ...articles,            // 원본
-          ...articles.slice(0, 2), // 첫 2개를 뒤에 복사
-        ]
+      ? [...articles.slice(-2), ...articles, ...articles.slice(0, 2)]
       : new Array(5).fill(articles[0]);
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
-  const [index, setIndex] = useState(articles.length >= 2 ? 2 : 0); // 원본 시작점으로 설정
+  const [index, setIndex] = useState(articles.length >= 2 ? 2 : 0);
 
-  // 초기 로드 시 중앙 위치로 스크롤
+  // 초기 중앙 위치로 스크롤
   useEffect(() => {
     if (scrollViewRef.current && loopData.length > 0) {
       const startIdx = articles.length >= 2 ? 2 : 0;
@@ -79,14 +76,11 @@ export default function Home() {
     }
   }, [SNAP_INTERVAL, loopData.length]);
 
-  // =============================
-  // LOOP 처리 - 무한 루프 구현
-  // =============================
+  // 무한루프 처리
   const handleScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
     let newIndex = Math.round(offsetX / SNAP_INTERVAL);
 
-    // 앞쪽 패딩 영역에 도달: 뒤쪽으로 이동
     if (newIndex < articles.length / 2) {
       newIndex = articles.length + (newIndex % articles.length);
       scrollViewRef.current?.scrollTo({
@@ -94,8 +88,6 @@ export default function Home() {
         animated: false,
       });
     }
-
-    // 뒤쪽 패딩 영역에 도달: 앞쪽으로 이동
     if (newIndex >= articles.length + articles.length / 2) {
       newIndex = articles.length - (loopData.length - newIndex);
       scrollViewRef.current?.scrollTo({
@@ -107,11 +99,8 @@ export default function Home() {
     setIndex(newIndex);
   };
 
-
-  // =============================
-  // 카드 컴포넌트
-  // =============================
-  const Card = ({ item, cardIndex }: { item: any; cardIndex: number }) => {
+  // 카드 UI
+  const Card = ({ item, cardIndex }: any) => {
     const inputRange = [
       (cardIndex - 1) * SNAP_INTERVAL,
       cardIndex * SNAP_INTERVAL,
@@ -128,7 +117,7 @@ export default function Home() {
       outputRange: [0.4, 1, 0.4],
     });
 
-    const firstImage = Array.isArray(item?.content) ? getFirstImage(item.content) : null;
+    const firstImage = getFirstImage(item?.content);
     const summaryText = item?.summary ?? "";
 
     return (
@@ -136,29 +125,18 @@ export default function Home() {
         <Pressable>
           <Animated.View
             style={[
+              styles.card,
               {
                 width: CARD_WIDTH,
-                height: 400,
-                marginRight: CARD_SPACING,
-                backgroundColor: "#fff",
-                borderRadius: 18,
-                padding: 14,
-                shadowColor: "#000",
-                shadowOpacity: 0.08,
-                shadowRadius: 6,
-              },
-              {
                 opacity,
                 transform: [{ scale }],
               },
             ]}
-          >  
-            {/* 제목 */}
+          >
             <Text style={styles.cardTitle} numberOfLines={2}>
               {item.title}
             </Text>
 
-            {/* 이미지 또는 플레이스홀더 */}
             {firstImage ? (
               <Image
                 source={{ uri: firstImage }}
@@ -170,13 +148,11 @@ export default function Home() {
                 <Image
                   source={require("../../assets/knight/deliever.png")}
                   style={styles.placeholderImage}
-                  resizeMode="contain"
                 />
                 <Text style={styles.placeholderText}>이미지가 없습니다.</Text>
               </View>
             )}
 
-            {/* 요약 */}
             <Text numberOfLines={3} style={styles.cardSummary}>
               {summaryText}
             </Text>
@@ -217,30 +193,17 @@ export default function Home() {
           </Link>
         </View>
 
-        {/* 요일 */}
+        {/* 요일 표시 */}
         <View style={styles.weekRow}>
           {["월", "화", "수", "목", "금", "토", "일"].map((day, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dayCircle,
-                (i + 1) % 7 === today.getDay() && styles.todayCircle,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.dayText,
-                  (i + 1) % 7 === today.getDay() && styles.todayText,
-                ]}
-              >
-                {day}
-              </Text>
+            <View key={i} style={styles.dayCircle}>
+              <Text style={styles.dayText}>{day}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      {/* 기사 3장 캐러셀 */}
+      {/* 캐러셀 */}
       <View style={{ marginTop: 40 }}>
         <Text style={styles.sectionTitle}>오늘의 기사</Text>
 
@@ -265,10 +228,16 @@ export default function Home() {
           ))}
         </Animated.ScrollView>
       </View>
+
+      {/* 🍕 피자 네비 메뉴 */}
+      <PizzaMenu />
     </View>
   );
 }
 
+// ===============================
+// STYLES
+// ===============================
 const styles = StyleSheet.create({
   streakCard: {
     backgroundColor: "#fff7e6",
@@ -322,11 +291,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f0f0f0",
   },
-  todayCircle: {
-    backgroundColor: "#ffd666",
-  },
   dayText: { fontSize: 14, color: "#666" },
-  todayText: { color: "#fff", fontWeight: "700" },
 
   sectionTitle: {
     fontSize: 18,
@@ -337,7 +302,7 @@ const styles = StyleSheet.create({
   },
   card: {
     height: 500,
-    marginRight: CARD_SPACING,
+    marginRight: 10,
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 14,

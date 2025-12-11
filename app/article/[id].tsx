@@ -9,7 +9,7 @@ import KeywordTab from "./components/KeywordTab";
 import QuizTab from "./components/QuizTab";
 
 // 데이터 저장소에서 article/quiz 불러오기
-import { getArticleById, getQuizById } from "../data/article";
+import { getArticleById, getQuizById } from "../../data/article";
 
 export default function ArticleDetail() {
   const router = useRouter();
