@@ -72,7 +72,7 @@ export default function PizzaMenu() {
         translateX={slice3X}
         translateY={slice3Y}
         scale={sliceScale}
-        onPressRoute="/report"
+        onPressRoute="/wrongArticles"
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
