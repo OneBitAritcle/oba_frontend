@@ -1,17 +1,16 @@
 // app/(auth)/login.tsx
 
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from "react-native";
-
-const { width, height } = Dimensions.get("window");
+import { View, Text, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
 
 export default function Login() {
+  const { width, height } = useWindowDimensions();
   return (
     <View style={styles.container}>
       
       {/* 로고 / 캐릭터 */}
       <Image
         source={require("../../assets/knight/hand.png")}
-        style={styles.logo}
+        style={[{ width: width * 0.55, height: height * 0.23, marginBottom: 16 }]}
         resizeMode="contain"
       />
 
@@ -58,14 +57,7 @@ const styles = StyleSheet.create({
     // backgroundColor: "#F5FAFF",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 30,
-  },
-
-  // 🔥 캐릭터 크게 + 비율 유지
-  logo: {
-    width: width * 0.55,
-    height: height * 0.23,
-    marginBottom: 16,
+    paddingHorizontal: 16,
   },
 
   title: {
