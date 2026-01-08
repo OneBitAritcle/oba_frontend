@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import "react-native-reanimated";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AppBackground from "./components/AppBackground";
 import { SplashScreen } from "expo-router";
 
@@ -20,20 +21,23 @@ const MyTheme = {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={MyTheme}>
-      <View style={{ flex: 1, backgroundColor: "transparent" }}>
-        <AppBackground />
+    <SafeAreaProvider>
+      <ThemeProvider value={MyTheme}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}>
+          <View style={{ flex: 1, backgroundColor: "transparent" }}>
+            <AppBackground />
 
-        <View style={{ flex: 1, backgroundColor: "transparent" }}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            {/* <Stack.Screen name="article" options={{ headerShown: false }} /> */}
-          </Stack>
-        </View>
-
+            <View style={{ flex: 1, backgroundColor: "transparent" }}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                {/* <Stack.Screen name="article" options={{ headerShown: false }} /> */}
+              </Stack>
+            </View>
+          </View>
+        </SafeAreaView>
         <StatusBar style="auto" />
-      </View>
-    </ThemeProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

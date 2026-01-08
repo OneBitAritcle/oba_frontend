@@ -1,5 +1,6 @@
 // app/components/PizzaMenu/index.tsx
 import { View, Pressable, Animated, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import usePizzaAnimation from "./usePizzaAnimation";
 import PizzaSlice from "./PizzaSlice";
 
@@ -19,6 +20,7 @@ export default function PizzaMenu() {
     anim,
   } = usePizzaAnimation();
 
+  const insets = useSafeAreaInsets();
   const containerSize = 70 * factor;
   const halfSize = 70 * factor;
 
@@ -26,7 +28,7 @@ export default function PizzaMenu() {
     <View
       style={[
         styles.container,
-        { width: containerSize, height: containerSize },
+        { width: containerSize, height: containerSize, bottom: insets.bottom + 16 },
       ]}
     >
       {/* 슬라이스 1: 마이 */}
@@ -107,7 +109,7 @@ export default function PizzaMenu() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: 20,
+
     right: 10,
     width: 50,
     height: 50,

@@ -11,6 +11,7 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 import { articles } from "../../data/article";
 import PizzaMenu from "../components/PizzaMenu";
@@ -22,11 +23,12 @@ import PizzaMenu from "../components/PizzaMenu";
 const CARD_SPACING = 10;
 
 function useDynamicDimensions() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const CARD_WIDTH = width * 0.65;
+  const CARD_HEIGHT = Math.min(height * 0.5, 500); // 최대 500, 작은 화면 고려
   const SIDE_SPACING = (width - CARD_WIDTH) / 2;
   const SNAP_INTERVAL = CARD_WIDTH + CARD_SPACING;
-  return { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL };
+  return { CARD_WIDTH, CARD_HEIGHT, SIDE_SPACING, SNAP_INTERVAL };
 }
 
 // 첫 이미지 추출
@@ -43,7 +45,8 @@ const getFirstImage = (content: any): string | null => {
 };
 
 export default function Home() {
-  const { CARD_WIDTH, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
+  const { CARD_WIDTH, CARD_HEIGHT, SIDE_SPACING, SNAP_INTERVAL } = useDynamicDimensions();
+  const insets = useSafeAreaInsets();
 
   const today = new Date();
   const formattedDate = today.toLocaleDateString("ko-KR", {
@@ -128,6 +131,7 @@ export default function Home() {
               styles.card,
               {
                 width: CARD_WIDTH,
+                height: CARD_HEIGHT,
                 opacity,
                 transform: [{ scale }],
               },
@@ -163,7 +167,7 @@ export default function Home() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: 80 }}>
+    <View style={{ flex: 1, paddingTop: insets.top + 20 }}>
       {/* 상단 박스 */}
       <View style={styles.streakCard}>
         <View style={styles.topRow}>
@@ -204,7 +208,7 @@ export default function Home() {
       </View>
 
       {/* 캐러셀 */}
-      <View style={{ marginTop: 40 }}>
+      <View style={{ marginTop: 16 }}>
         <Text style={styles.sectionTitle}>오늘의 기사</Text>
 
         <Animated.ScrollView
@@ -242,7 +246,7 @@ const styles = StyleSheet.create({
   streakCard: {
     backgroundColor: "#fff7e6",
     marginHorizontal: 16,
-    padding: 20,
+    padding: 16,
     borderRadius: 20,
   },
   topRow: {
@@ -279,7 +283,7 @@ const styles = StyleSheet.create({
   },
 
   weekRow: {
-    marginTop: 14,
+    marginTop: 12,
     flexDirection: "row",
     justifyContent: "space-between",
   },
@@ -301,8 +305,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   card: {
-    height: 500,
-    marginRight: 10,
+    marginRight: 12,
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 14,
