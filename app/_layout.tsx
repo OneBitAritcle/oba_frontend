@@ -5,17 +5,13 @@ import { View } from "react-native";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AppBackground from "./components/AppBackground";
-import { SplashScreen } from "expo-router";
 
-// SplashScreen.preventAutoHideAsync();  // 디버그 UI 숨김용 
-// 이 코드 때문에 앱에서 실행이 안됐음
-// 스플래시(초기 로딩 화면)를 수동 제어하려면 preventAutoHideAsync()와 hideAsync() 쌍이 필요함.
-
+// 🔥 수정된 테마 설정 (오타 제거됨)
 const MyTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "transparent",  // 🔥 Theme 기본 배경 투명화
+    background: "transparent",
   },
 };
 
@@ -24,14 +20,19 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={MyTheme}>
         <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}>
+          {/* 전체 배경 적용 */}
           <View style={{ flex: 1, backgroundColor: "transparent" }}>
             <AppBackground />
 
+            {/* 네비게이션 스택 */}
             <View style={{ flex: 1, backgroundColor: "transparent" }}>
               <Stack screenOptions={{ headerShown: false }}>
+                {/* 탭 화면 */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                {/* 인증(로그인) 화면 */}
                 <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                {/* <Stack.Screen name="article" options={{ headerShown: false }} /> */}
+                {/* 기사 상세 화면 (동적 라우팅) */}
+                <Stack.Screen name="article/[id]" options={{ headerShown: false }} />
               </Stack>
             </View>
           </View>

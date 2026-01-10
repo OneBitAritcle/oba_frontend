@@ -75,6 +75,8 @@
 //   },
 // });
 
+// oba_fronted/app/article/components/TabBar.tsx
+
 // 제안: 아이폰 스타일의 슬라이딩 탭바
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";

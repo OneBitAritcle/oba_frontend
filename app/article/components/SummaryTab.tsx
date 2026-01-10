@@ -1,3 +1,5 @@
+// oba_fronted/app/article/components/SummaryTab.tsx
+
 import { View, Text, StyleSheet } from "react-native";
 
 export default function SummaryTab({ summary }) {

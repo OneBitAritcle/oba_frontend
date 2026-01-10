@@ -1,3 +1,5 @@
+// oba_fronted/app/article/components/QuizTab.tsx
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"

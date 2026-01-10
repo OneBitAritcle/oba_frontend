@@ -1,3 +1,6 @@
+
+// oba_fronted/app/article/components/AppBackground.tsx
+
 import { View, Image, StyleSheet, useWindowDimensions } from "react-native";
 
 export default function AppBackground() {

@@ -1,3 +1,5 @@
+// oba_fronted/app/(tabs)/wrongArticles/index.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -11,72 +13,44 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons"; 
-// import { apiClient } from "@/src/api/apiClient"; // (나중에 실제 연동 시 주석 해제)
+import { Ionicons } from "@expo/vector-icons";
+import { apiClient } from "../../../src/api/apiClient";
 
 // ---------------------------------------------------------
 // 1. 데이터 타입 정의 (백엔드와 약속한 데이터 모양)
 // ---------------------------------------------------------
-// (마이페이지 제거) UserProfile 타입 제거
-
 type HistoryItem = {
-  article_id: number; // bigint는 JS에서 number나 string으로 처리됨 
-  serving_date: string; // 
+  article_id: number;
+  serving_date: string;
   title: string;
   category_name: string;
   isWrong: boolean;
 };
 
-export default function MyPage() {
+export default function WrongArticlesPage() {
   const router = useRouter();
+
   // ---------------------------------------------------------
   // 상태 관리 (State)
   // ---------------------------------------------------------
-  // 타임라인 데이터 상태
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 필터/정렬 상태
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [categories, setCategories] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   // ---------------------------------------------------------
-  // 데이터 통합 요청 (Promise.all 활용)
+  // 데이터 요청
   // ---------------------------------------------------------
-  const fetchAllData = async () => {
+  const fetchHistory = async () => {
     try {
-      // 실제 API 호출 예시:
-      // const [userRes, historyRes] = await Promise.all([
-      //   apiClient.get("/user/me"),
-      //   apiClient.get("/my/wrong-answers")
-      // ]);
+      const res = await apiClient.get("/my/wrong-answers");
+      setHistoryData(res.data);
 
-      console.log("[Client] 유저 정보와 타임라인 데이터를 동시에 요청합니다...");
-
-      // 👇 [테스트용] 백엔드 응답 시간 시뮬레이션 (1초 대기)
-      // Promise.all을 쓰면 두 요청이 '병렬'로 진행되어 더 빠릅니다.
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // (테스트용) 유저 mock 제거 — 마이페이지 기능 제외
-
-      // 2. 가짜 타임라인 데이터 도착
-      const mockHistory: HistoryItem[] = [
-        { article_id: 1, serving_date: "2025.03.10", title: "전기차 배터리 기술의 새로운 돌파구, 충전 시간 10분으로 단축", category_name: "Tech News", isWrong: true },
-        { article_id: 2, serving_date: "2025.03.08", title: "AI가 의료 진단 정확도 95%까지 향상시켰다", category_name: "Health Daily", isWrong: true },
-        { article_id: 3, serving_date: "2025.03.05", title: "“AI 에이전트는 아직 ‘말 없는 마차’ 수준…완전한 자율화는 먼 미래”", category_name: "Environment Weekly", isWrong: true },
-        { article_id: 4, serving_date: "2025.03.05", title: "AI 시대에도 ‘개방성’이 힘을 가질까?", category_name: "Environment Weekly", isWrong: true },
-        { article_id: 5, serving_date: "2025.03.03", title: "보안 행동과 인식 수준을 높이는 핵심 전략 ‘공감 기반 정책 엔지니어링’", category_name: "Environment Weekly", isWrong: true },
-      ];
-
-      // 상태 한 번에 업데이트
-      setHistoryData(mockHistory);
-
-      // 카테고리 목록 구성 (중복 제거) + 'All' 포함
-      const cats = Array.from(new Set(mockHistory.map((h) => h.category_name)));
+      const cats = Array.from(new Set(res.data.map((h: HistoryItem) => h.category_name)));
       setCategories(["All", ...cats]);
-
     } catch (error) {
       console.error("데이터 로딩 실패:", error);
       Alert.alert("오류", "데이터를 불러오지 못했습니다.");
@@ -87,70 +61,67 @@ export default function MyPage() {
   };
 
   useEffect(() => {
-    fetchAllData();
+    fetchHistory();
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchAllData();
+    fetchHistory();
   };
 
   // ---------------------------------------------------------
   // 리스트 헤더 (필터 + 정렬 포함)
   // ---------------------------------------------------------
-  const renderHeader = () => {
-    return (
-      <View style={styles.headerSection}>
-        <View style={styles.timelineHeader}>
-          <Text style={styles.sectionTitle}>틀린 기사 다시보기</Text>
-          <Text style={styles.sectionSubtitle}>최근 1년의 기사를 확인하세요</Text>
-        </View>
-
-        {/* 필터 및 정렬 바 */}
-        <View style={styles.filterBar}>
-          <FlatList
-            data={categories}
-            horizontal
-            keyExtractor={(c) => c}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.categoryBtn, selectedCategory === item && styles.categoryBtnActive]}
-                onPress={() => setSelectedCategory(item)}
-              >
-                <Text style={[styles.categoryText, selectedCategory === item && styles.categoryTextActive]}>{item}</Text>
-              </TouchableOpacity>
-            )}
-          />
-
-          <TouchableOpacity
-            style={styles.sortBtn}
-            onPress={() => setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))}
-          >
-            <Ionicons name={sortOrder === "newest" ? "arrow-down" : "arrow-up"} size={18} color="#007AFF" />
-            <Text style={styles.sortText}>{sortOrder === "newest" ? "최신순" : "오래된 순"}</Text>
-          </TouchableOpacity>
-        </View>
+  const renderHeader = () => (
+    <View style={styles.headerSection}>
+      <View style={styles.timelineHeader}>
+        <Text style={styles.sectionTitle}>틀린 기사 다시보기</Text>
+        <Text style={styles.sectionSubtitle}>최근 1년의 기사를 확인하세요</Text>
       </View>
-    );
-  };
+
+      <View style={styles.filterBar}>
+        <FlatList
+          data={categories}
+          horizontal
+          keyExtractor={(c) => c}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.categoryBtn, selectedCategory === item && styles.categoryBtnActive]}
+              onPress={() => setSelectedCategory(item)}
+            >
+              <Text style={[styles.categoryText, selectedCategory === item && styles.categoryTextActive]}>
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+
+        <TouchableOpacity
+          style={styles.sortBtn}
+          onPress={() => setSortOrder((s) => (s === "newest" ? "oldest" : "newest"))}
+        >
+          <Ionicons name={sortOrder === "newest" ? "arrow-down" : "arrow-up"} size={18} color="#007AFF" />
+          <Text style={styles.sortText}>{sortOrder === "newest" ? "최신순" : "오래된 순"}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   // ---------------------------------------------------------
-  // 리스트 아이템 (타임라인 줄 한 칸)
+  // 리스트 아이템
   // ---------------------------------------------------------
   const renderItem = ({ item }: { item: HistoryItem }) => (
     <View style={styles.timelineItem}>
-      {/* 왼쪽 라인 & 점 */}
       <View style={styles.timelineLeft}>
         <View style={styles.line} />
         <View style={styles.dot} />
       </View>
 
-      {/* 오른쪽 카드 내용 */}
       <View style={styles.timelineRight}>
         <Text style={styles.dateText}>{item.serving_date}</Text>
-        <TouchableOpacity 
-          style={styles.articleCard} 
+        <TouchableOpacity
+          style={styles.articleCard}
           onPress={() => router.push(`/article/${item.article_id}`)}
         >
           <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
@@ -172,24 +143,17 @@ export default function MyPage() {
         </View>
       ) : (
         <FlatList
-          data={
-            // 카테고리 필터 적용
-            historyData
-              .filter((h) => selectedCategory === "All" ? true : h.category_name === selectedCategory)
-              .sort((a, b) => {
-                // serving_date 형식: YYYY.MM.DD -> 비교를 위해 YYYYMMDD로 변환
-                const norm = (s: string) => s.replace(/\./g, "");
-                const ad = parseInt(norm(a.serving_date));
-                const bd = parseInt(norm(b.serving_date));
-                return sortOrder === "newest" ? bd - ad : ad - bd;
-              })
-          }
+          data={historyData
+            .filter((h) => selectedCategory === "All" ? true : h.category_name === selectedCategory)
+            .sort((a, b) => {
+              const norm = (s: string) => s.replace(/\./g, "");
+              const ad = parseInt(norm(a.serving_date));
+              const bd = parseInt(norm(b.serving_date));
+              return sortOrder === "newest" ? bd - ad : ad - bd;
+            })}
           renderItem={renderItem}
           keyExtractor={(item) => item.article_id.toString()}
-
-          // 헤더: 제목 + 필터바
           ListHeaderComponent={renderHeader}
-          
           contentContainerStyle={styles.listContentContainer}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -200,11 +164,10 @@ export default function MyPage() {
           }
         />
       )}
-
-      {/* (마이페이지 제거) 닉네임 수정 모달 제거됨 */}
     </View>
   );
 }
+
 
 // -----------------------------------------------------
 // 스타일 정의
