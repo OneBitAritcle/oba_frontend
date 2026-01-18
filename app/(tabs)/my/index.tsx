@@ -1,170 +1,203 @@
 // oba_fronted/app/(tabs)/my/index.tsx
-// oba_fronted/app/(tabs)/my/index.tsx
 
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-  Platform,
-} from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useState, useCallback } from "react";
+import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
-// import { apiClient } from "../../src/api/apiClient"; // 백엔드 API 완성 시 주석 해제
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type UserProfile = {
-  nickname: string;
-  email: string;
-  profileImage: any;
-};
+// ✅ 경로 확인 (본인 프로젝트 구조에 맞게)
+import { apiClient } from "../../../src/api/apiClient"; 
+import PizzaMenu from "../../components/PizzaMenu";     
 
 export default function MyPage() {
   const router = useRouter();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [inputText, setInputText] = useState("");
+  const insets = useSafeAreaInsets();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchAllData = async () => {
+  // 화면이 포커스될 때마다 유저 정보 갱신
+  useFocusEffect(
+    useCallback(() => {
+      fetchUser();
+    }, [])
+  );
+
+  const fetchUser = async () => {
     try {
-      console.log("[Client] 유저 정보를 요청합니다...");
-      
-      // ✅ 실제 API 연동 시 아래 주석 해제
-      // const res = await apiClient.get("/user/me");
-      // setUserProfile(res.data);
-
-      // 현재는 더미 데이터 사용
-      await new Promise((resolve) => setTimeout(resolve, 800)); 
-      
-      const mockUser: UserProfile = {
-        nickname: "김제니",
-        email: "demo@oba.com",
-        profileImage: require("../../../assets/knight/basic_profile.png"),
-      };
-      setUserProfile(mockUser);
-
-    } catch (error) {
-      console.error("데이터 로딩 실패:", error);
-      Alert.alert("오류", "데이터를 불러오지 못했습니다.");
+      const res = await apiClient.get("/api/users/me");
+      // 유저 정보가 있고 이름이 유효한 경우만 세팅
+      if (res.data && res.data.name) {
+        setUser(res.data);
+      } else {
+        setUser(null);
+      }
+    } catch (e) {
+      console.log("Guest 모드: 유저 정보를 불러올 수 없습니다.");
+      setUser(null);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  const openEditModal = () => {
-    if (!userProfile) return;
-    setInputText(userProfile.nickname);
-    setModalVisible(true);
+  const handleLogout = async () => {
+    Alert.alert("로그아웃", "정말 로그아웃 하시겠습니까?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "확인",
+        style: "destructive",
+        onPress: async () => {
+          await SecureStore.deleteItemAsync("accessToken");
+          await SecureStore.deleteItemAsync("refreshToken");
+          setUser(null);
+          router.replace("/(tabs)"); 
+        },
+      },
+    ]);
   };
 
-  const handleSaveNickname = async () => {
-    if (inputText.trim() === "") {
-      Alert.alert("알림", "닉네임을 입력해주세요.");
-      return;
-    }
-    try {
-      // await apiClient.post("/user/nickname", { nickname: inputText });
-      setUserProfile((prev) => prev ? { ...prev, nickname: inputText } : null);
-      setModalVisible(false);
-      Alert.alert("성공", "닉네임이 수정되었습니다.");
-    } catch (error) {
-      Alert.alert("오류", "닉네임 수정 실패");
-    }
-  };
-
-  const renderHeader = () => {
-    if (!userProfile) return null;
-    return (
-      <View style={styles.headerSection}>
-        <TouchableOpacity style={styles.trendyCard} activeOpacity={0.9} onPress={openEditModal}>
-          <View style={styles.profileLeft}>
-            <Image source={userProfile.profileImage} style={styles.trendyImage} />
-          </View>
-          <View style={styles.profileRight}>
-            <View style={styles.nameRow}>
-              <Text style={styles.userName}>{userProfile.nickname}</Text>
-              <Ionicons name="pencil" size={16} color="#999" />
-            </View>
-            <Text style={styles.userId}>{userProfile.email}</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    );
+  const handleLoginNavigation = () => {
+    router.push("/(auth)/login");
   };
 
   return (
-    <View style={styles.container}>
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A8CFF" />
-          <Text style={styles.loadingText}>정보를 불러오는 중...</Text>
-        </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          {renderHeader()}
-          <View style={{ paddingHorizontal: 24, paddingTop: 12 }}>
-            <Text style={{ color: '#8E8E93' }}>내 정보 및 설정을 확인하세요.</Text>
+    <View style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        {/* 헤더 섹션 */}
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+          {/* 뒤로가기 버튼 */}
+          <View style={styles.navBarAbsolute}>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)")} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
           </View>
-        </View>
-      )}
 
-      {/* 닉네임 수정 모달 */}
-      <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>닉네임 수정</Text>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="새로운 닉네임을 입력하세요"
-              autoFocus={true}
+          {/* 프로필 이미지 */}
+          <View style={styles.profileImageWrap}>
+            <Image
+              source={
+                user?.picture
+                  ? { uri: user.picture }
+                  : require("../../../assets/knight/hand.png")
+              }
+              style={styles.profileImage}
+              resizeMode="cover"
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSaveNickname}>
-                <Text style={styles.saveText}>저장</Text>
-              </TouchableOpacity>
-            </View>
           </View>
+
+          {/* 이름 & 이메일 (로그인 여부에 따라 텍스트 변경) */}
+          <Text style={styles.name}>
+            {user ? user.name : "로그인이 필요합니다"}
+          </Text>
+          {user ? (
+            <Text style={styles.email}>{user.email}</Text>
+          ) : (
+            <Text style={styles.guestText}>회원가입하고 학습 기록을 남겨보세요!</Text>
+          )}
         </View>
-      </Modal>
+
+        {/* 메뉴 리스트 */}
+        <View style={styles.menuContainer}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(tabs)/wrongArticles")}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Ionicons name="book-outline" size={20} color="#333" />
+              <Text style={styles.menuText}>오답 노트</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ✅ 핵심: 상태에 따라 버튼 분기 (로그인 vs 로그아웃) */}
+        <View style={styles.actionButtonContainer}>
+          {user ? (
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+              <Text style={styles.logoutText}>로그아웃</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleLoginNavigation} style={styles.loginButton}>
+              <Text style={styles.loginText}>로그인 하기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+      </ScrollView>
+      
+      {/* 피자 메뉴는 항상 표시 */}
+      <PizzaMenu />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5FAFF" },
-  headerSection: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 30, backgroundColor: "#F5FAFF" },
-  trendyCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#ffffff", padding: 24, borderRadius: 24, ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 12 }, android: { elevation: 6 } }), borderWidth: 1, borderColor: "#F2F4F6" },
-  profileLeft: { marginRight: 18 },
-  trendyImage: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#F2F4F6", borderWidth: 2, borderColor: "#fff" },
-  profileRight: { flex: 1, justifyContent: "center" },
-  nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
-  userName: { fontSize: 22, fontWeight: "800", color: "#1A1A1A", marginRight: 8 },
-  userId: { fontSize: 14, color: "#8E8E93", fontWeight: "500" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, color: "#8E8E93", fontSize: 15 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { width: "85%", backgroundColor: "white", borderRadius: 20, padding: 28, alignItems: "center", elevation: 5 },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 20, color: "#1A1A1A" },
-  input: { width: "100%", height: 52, borderWidth: 1, borderColor: "#E5E5EA", borderRadius: 12, paddingHorizontal: 16, marginBottom: 24, fontSize: 16, backgroundColor: "#F2F4F6" },
-  modalButtons: { flexDirection: "row", width: "100%", gap: 12 },
-  modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  cancelBtn: { backgroundColor: "#F2F4F6" },
-  saveBtn: { backgroundColor: "#007AFF" },
-  cancelText: { fontSize: 16, color: "#8E8E93", fontWeight: "600" },
-  saveText: { fontSize: 16, color: "white", fontWeight: "600" },
+  header: {
+    alignItems: "center",
+    paddingBottom: 30,
+    backgroundColor: "#fff",
+    marginBottom: 20,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  navBarAbsolute: { position: "absolute", top: 50, left: 20, zIndex: 10 },
+  backButton: { padding: 5 },
+  profileImageWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: "hidden",
+    marginBottom: 15,
+    backgroundColor: "#eee",
+    borderWidth: 1,
+    borderColor: "#f0f0f0"
+  },
+  profileImage: { width: "100%", height: "100%" },
+  name: { fontSize: 22, fontWeight: "bold", color: "#333", marginBottom: 4 },
+  email: { fontSize: 14, color: "#888" },
+  guestText: { fontSize: 14, color: "#aaa", marginTop: 4 },
+  
+  menuContainer: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    marginHorizontal: 20,
+    borderRadius: 16,
+    marginBottom: 30,
+  },
+  menuItem: {
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  menuText: { fontSize: 16, color: "#333", fontWeight: "500" },
+
+  actionButtonContainer: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  logoutButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+  },
+  logoutText: { color: "#FF3B30", fontSize: 16, fontWeight: "600" },
+
+  loginButton: {
+    backgroundColor: "#FF6B00",
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    shadowColor: "#FF6B00",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });

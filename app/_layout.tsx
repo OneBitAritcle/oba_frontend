@@ -1,44 +1,21 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+// oba_frontend/app/_layout.tsx
+import { Slot } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
-import "react-native-reanimated";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import AppBackground from "./components/AppBackground";
 
-// 🔥 수정된 테마 설정 (오타 제거됨)
-const MyTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: "transparent",
-  },
-};
+// 만약 에러가 난다면 "../src/components/AppBackground" 로 경로를 수정해보세요.
+import AppBackground from "./components/AppBackground"; 
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={MyTheme}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}>
-          {/* 전체 배경 적용 */}
-          <View style={{ flex: 1, backgroundColor: "transparent" }}>
-            <AppBackground />
-
-            {/* 네비게이션 스택 */}
-            <View style={{ flex: 1, backgroundColor: "transparent" }}>
-              <Stack screenOptions={{ headerShown: false }}>
-                {/* 탭 화면 */}
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                {/* 인증(로그인) 화면 */}
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                {/* 기사 상세 화면 (동적 라우팅) */}
-                <Stack.Screen name="article/[id]" options={{ headerShown: false }} />
-              </Stack>
-            </View>
-          </View>
-        </SafeAreaView>
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+        {/* 전체 배경 적용 */}
+        <AppBackground />
+        
+        {/* 화면이 표시되는 영역 */}
+        <Slot />
+      </View>
     </SafeAreaProvider>
   );
 }

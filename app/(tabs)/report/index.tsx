@@ -1,6 +1,5 @@
 // oba_fronted/app/(tabs)/report/index.tsx
 
-// app/(tabs)/report.tsx
 import { View, Text, StyleSheet } from "react-native";
 
 export default function ReportPage() {
