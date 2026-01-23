@@ -18,6 +18,8 @@ export default function PizzaMenu() {
     isOpen,
     factor,
     anim,
+    baseX,
+    baseY,
   } = usePizzaAnimation();
 
   const insets = useSafeAreaInsets();
@@ -96,7 +98,11 @@ export default function PizzaMenu() {
             {
               width: halfSize,
               height: halfSize,
-              transform: [{ scale: halfScale }],
+              transform: [
+                { scale: halfScale },
+                { translateX: baseX },
+                { translateY: baseY },
+              ],
             },
           ]}
           resizeMode="contain"
