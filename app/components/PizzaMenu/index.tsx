@@ -47,8 +47,8 @@ export default function PizzaMenu() {
         label="마이"
         sliceTouchScale={0.5}
         sliceSize={60}
-        labelOffsetX={-10}
-        labelOffsetY={-30}
+        labelOffsetX={-25}
+        labelOffsetY={-50}
       />
 
       {/* 슬라이스 2: 리포트 */}
@@ -66,8 +66,8 @@ export default function PizzaMenu() {
         sliceTouchScale={0.5}
         sliceSize={62.5}
         sliceRotation={0.3}
-        labelOffsetX={-33}
-        labelOffsetY={-15}
+        labelOffsetX={-55}
+        labelOffsetY={-25}
       />
 
       {/* 슬라이스 3: 틀린문제 */}
@@ -85,7 +85,7 @@ export default function PizzaMenu() {
         sliceTouchScale={0.5}
         sliceSize={63}
         sliceRotation={0.5}
-        labelOffsetX={-43}
+        labelOffsetX={-85}
         labelOffsetY={0}
       />
 
