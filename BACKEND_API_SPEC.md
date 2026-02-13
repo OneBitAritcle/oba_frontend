@@ -1,6 +1,6 @@
-# OBA Project - Report API 명세서
+# OBA Project - API 명세서
 
-> 학습 리포트 화면(Report Page)의 백엔드 API 명세
+> 학습 리포트 화면(Report Page) 및 마이페이지(My Page)의 백엔드 API 명세
 
 ---
 
@@ -12,6 +12,7 @@
 | 2 | `/api/report/progress` | GET | 전체 학습 진도 (푼 문제/전체 문제) | ProgressBar |
 | 3 | `/api/report/daily-stats` | GET | 요일별 정답률 (최근 7일) | DailyChart |
 | 4 | `/api/report/category-progress` | GET | 카테고리별 정답률 | CategoryProgress |
+| 5 | `/api/feedback` | POST | 고객 소리함 전송 | MyPage (Feedback Modal) |
 
 ---
 
@@ -463,6 +464,160 @@ GET /api/report/all
 
 ---
 
+## 5️⃣ 고객 소리함 (Feedback) 전송
+
+### Endpoint
+```
+POST /api/feedback
+```
+
+### Description
+사용자의 피드백, 의견, 건의사항을 MongoDB에 저장합니다.
+JWT 토큰에서 자동으로 user_id를 추출하고, 서버에서 현재 시간을 기록합니다.
+
+### Request
+
+**Headers**
+```
+Authorization: Bearer {JWT_TOKEN}
+Content-Type: application/json
+```
+
+**Request Body**
+```json
+{
+  "content": "앱 사용성이 정말 좋습니다. 더 많은 카테고리가 추가되길 바랍니다."
+}
+```
+
+### Request Field Description
+
+| 필드명 | 타입 | 필수 | 설명 | 제약조건 |
+|-------|------|------|------|--------|
+| content | STRING | Yes | 피드백 내용 | 1자 이상 700자 이하 |
+
+### Response
+
+**Status: 201 Created**
+```json
+{
+  "code": "SUCCESS",
+  "message": "피드백이 성공적으로 저장되었습니다.",
+  "data": {
+    "feedbackId": "65f8b2c9d4e5f1a2b3c4d5e6",
+    "userId": "user12345",
+    "content": "앱 사용성이 정말 좋습니다. 더 많은 카테고리가 추가되길 바랍니다.",
+    "submittedAt": "2026-02-13T10:45:30Z"
+  },
+  "timestamp": "2026-02-13T10:45:30Z"
+}
+```
+
+### Response Field Description
+
+| 필드명 | 타입 | 설명 | DB 매핑 |
+|-------|------|------|--------|
+| feedbackId | STRING | 생성된 피드백 ID (MongoDB ObjectId) | Feedback._id |
+| userId | STRING | 피드백을 제출한 사용자 ID (JWT에서 추출) | Feedback.user_id |
+| content | STRING | 피드백 내용 | Feedback.content |
+| submittedAt | DATETIME | 피드백 제출 시간 (ISO 8601 UTC) | Feedback.submitted_at |
+
+### MongoDB Schema (Feedback Collection)
+```javascript
+{
+  _id: ObjectId,                  // 자동 생성
+  user_id: String,                // JWT 토큰에서 추출
+  content: String,                // 사용자가 입력한 피드백 (700자 이하)
+  submitted_at: Date,             // 서버 현재 시간 (ISO 8601 UTC)
+  created_at: Date,               // 문서 생성 시간 (선택사항)
+  status: String                  // "pending" | "reviewed" | "resolved" (선택사항)
+}
+```
+
+### 프론트엔드 임시저장 메커니즘
+- **로컬 스토리지 키**: `oba_feedback_draft`
+- **저장 시점**: 모달 닫기 시 (X 버튼, 닫기 버튼, 뒤로가기)
+- **로드 시점**: 모달 열릴 때 AsyncStorage에서 로드
+- **삭제 시점**: 피드백 전송 성공 후 또는 취소/빈 입력일 때
+
+### Error Cases
+
+| Status | Code | Message | 설명 |
+|--------|------|---------|------|
+| 400 | INVALID_REQUEST | 요청 형식이 올바르지 않음 | content 필드 누락 또는 잘못된 형식 |
+| 400 | CONTENT_EMPTY | 피드백 내용이 비어있음 | content가 빈 문자열 또는 공백만 포함 |
+| 400 | CONTENT_TOO_LONG | 피드백 내용이 너무 길어요 | content 길이 > 700자 |
+| 401 | UNAUTHORIZED | JWT 토큰이 없거나 유효하지 않음 | Authorization 헤더 확인 필요 |
+| 401 | INVALID_TOKEN | 토큰 만료 또는 서명 검증 실패 | 새로운 토큰 요청 필요 |
+| 429 | RATE_LIMIT_EXCEEDED | 피드백 요청이 너무 많아요 | 일정 시간 후 다시 시도 |
+| 500 | INTERNAL_ERROR | 서버 오류 | 서버 로그 확인 필요 |
+
+### Example Usage (Frontend)
+```typescript
+// ✅ app/(tabs)/my/index.tsx - handleSubmitFeedback 함수
+
+const handleSubmitFeedback = async () => {
+  if (feedbackText.trim() === "") {
+    Alert.alert("알림", "피드백을 입력해주세요.");
+    return;
+  }
+
+  setIsSubmittingFeedback(true);
+  try {
+    // JWT 토큰은 apiClient에 자동으로 포함됨
+    const response = await apiClient.post("/api/feedback", {
+      content: feedbackText,
+      // Note: user_id는 JWT 토큰에서 자동으로 추출됨 (백엔드)
+      // Note: submitted_at은 백엔드에서 자동으로 현재 시간으로 설정됨
+      // Note: 프론트엔드에서 localStorage로 임시저장 후 전송
+    });
+
+    // 성공 응답
+    if (response.data.code === "SUCCESS") {
+      // 1. 저장된 초안 삭제
+      await deleteFeedbackDraft();
+      // 2. 모달 닫기
+      setFeedbackModalVisible(false);
+      // 3. 입력 텍스트 초기화
+      setFeedbackText("");
+      // 4. 토스트 메시지 띄우기 (Alert 대신 사용)
+      showThankYouToast(); // "소중한 의견 감사합니다!"
+      console.log("✅ 피드백 제출 완료:", response.data.data.feedbackId);
+    }
+  } catch (error: any) {
+    console.error("❌ 소리함 전송 실패:", error);
+    
+    const errorCode = error.response?.data?.code;
+    const errorMessage = error.response?.data?.message;
+
+    if (errorCode === "CONTENT_EMPTY") {
+      Alert.alert("오류", "피드백 내용을 입력해주세요.");
+    } else if (errorCode === "CONTENT_TOO_LONG") {
+      Alert.alert("오류", "피드백은 700자 이하여야 합니다.");
+    } else if (errorCode === "RATE_LIMIT_EXCEEDED") {
+      Alert.alert("알림", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+    } else {
+      Alert.alert("오류", errorMessage || "소리함 전송에 실패했습니다.");
+    }
+  } finally {
+    setIsSubmittingFeedback(false);
+  }
+};
+```
+
+### 프론트엔드 통합 체크리스트
+- [x] `apiClient` 설정 확인 (JWT 토큰 자동 포함)
+- [x] 피드백 모달 UI 구현 완료 (AsyncStorage 기반 임시저장)
+- [x] 텍스트 입력 유효성 검사 (700자 제한)
+- [x] 전송 로딩 상태 표시
+- [x] 성공/실패 알림 메시지 처리 (토스트 메시지)
+- [x] 에러 응답 코드별 처리
+- [x] 빈 입력값 방지
+- [x] 로컬 스토리지 임시저장 및 자동 로드
+- [x] 뒤로가기 버튼 및 X 버튼으로 모달 닫기 시 자동저장
+
+---
+
 ## 🔄 프론트엔드 통합 가이드
 
 ### report/index.tsx에서 API 활용 예시
@@ -550,4 +705,7 @@ const fetchReportData = async () => {
 - [ ] 응답 형식 통일 (code, message, data, timestamp)
 - [ ] 계산식 검증 (프론트 ↔ 백엔드 일치)
 - [ ] 성능 테스트 완료 (특히 daily-stats)
+- [ ] Feedback API MongoDB 컬렉션 생성
+- [ ] Feedback API 입력값 유효성 검사
+- [ ] Feedback API 요청 제한(Rate Limiting) 설정
 - [ ] 문서화 최종 검토
