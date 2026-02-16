@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Svg, Path } from "react-native-svg";
 
 type Props = {
   source: ImageSourcePropType;
@@ -113,8 +114,7 @@ export default function PizzaSlice({
       pointerEvents="box-none"
     >
       {/* 🎯 터치 가능한 실제 영역 */}
-      <Pressable
-        onPress={handlePress}
+      <View
         style={[
           {
             width: touchSize,
@@ -122,14 +122,40 @@ export default function PizzaSlice({
             justifyContent: "center",
             alignItems: "center",
           },
-          DEBUG_TOUCH && {
-            backgroundColor: "rgba(0,255,0,0.35)",
-            borderWidth: 1,
-            borderColor: "green",
-          },
         ]}
-        hitSlop={0}
+        pointerEvents="box-none"
       >
+        <View
+          style={{
+            position: "absolute",
+            width: touchSize,
+            height: touchSize,
+          }}
+          pointerEvents="box-none"
+        >
+          <Svg
+            width={touchSize}
+            height={touchSize}
+            viewBox={`0 0 ${touchSize} ${touchSize}`}
+            pointerEvents="box-none"
+            style={{
+              transform: [{ rotate: `${sliceRotation}deg` }],
+            }}
+          >
+            {/* 피자 조각 모양의 Path (부채꼴: 중심에서 위로, 그리고 왼쪽으로 60도) */}
+            <Path
+              d={`M ${touchSize / 2} ${touchSize / 2}
+                 L ${touchSize / 2} 0
+                 A ${touchSize / 2} ${touchSize / 2} 0 0 0 ${touchSize / 2 - (touchSize / 2) * Math.sin(Math.PI / 3)} ${touchSize / 2 - (touchSize / 2) * Math.cos(Math.PI / 3)}
+                 Z`}
+              fill={DEBUG_TOUCH ? "rgba(0,255,0,0.35)" : "transparent"}
+              stroke={DEBUG_TOUCH ? "green" : "transparent"}
+              strokeWidth={1}
+              onPress={handlePress}
+            />
+          </Svg>
+        </View>
+
         {/* 🍕 실제 조각 이미지 */}
         <Animated.View
           style={{
@@ -199,7 +225,7 @@ export default function PizzaSlice({
             </View>
           </Animated.View>
         )}
-      </Pressable>
+      </View>
     </Animated.View>
   );
 
