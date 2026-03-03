@@ -23,7 +23,14 @@ apiClient.interceptors.request.use(
       else if (url.includes("/api/report/progress")) data = mockData.MOCK_REPORT_PROGRESS;
       else if (url.includes("/api/report/daily-stats")) data = mockData.MOCK_DAILY_STATS;
       else if (url.includes("/api/report/category-progress")) data = mockData.MOCK_CATEGORY_PROGRESS;
+      else if (url.includes("/my/wrong-answers")) data = mockData.MOCK_WRONG_ANSWERS;
       else if (url.includes("/api/user/profile")) data = mockData.MOCK_USER_PROFILE;
+      else if (url.startsWith("/articles/")) {
+        const id = url.split("/").pop();
+        if (id && mockData.MOCK_ARTICLE_DETAILS[id]) {
+          data = mockData.MOCK_ARTICLE_DETAILS[id];
+        }
+      }
 
       if (data) {
         // Axios 응답 구조 모방하여 reject로 던짐 (response interceptor에서 처리)

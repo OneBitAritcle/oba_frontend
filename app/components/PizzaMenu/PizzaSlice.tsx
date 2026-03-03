@@ -1,4 +1,3 @@
-// app/components/PizzaMenu/PizzaSlice.tsx
 import React from "react";
 import {
   Animated,
@@ -10,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Svg, Path } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 
 type Props = {
   source: ImageSourcePropType;
@@ -31,6 +30,10 @@ type Props = {
   sliceSize?: number;        // 이미지 자체 크기
   sliceRotation?: number;    // 회전값
   sliceTouchScale?: number;  // 터치 가능 영역 축소 비율
+
+  touchRotationOffset?: number; // 터치 영역 추가 회전
+  touchOffsetX?: number;        // 터치 영역 가로 이동
+  touchOffsetY?: number;        // 터치 영역 세로 이동
 };
 
 export default function PizzaSlice({
@@ -49,7 +52,10 @@ export default function PizzaSlice({
   labelIconSource,
   sliceSize = 60,
   sliceRotation = 0,
-  sliceTouchScale = 0.72,  // ← 터치 영역 기본 축소 (겹침 방지 핵심 👈)
+  sliceTouchScale = 1.5,  // ← 너무 커서 0.85배로 다시 적절히 조정
+  touchRotationOffset = 0,
+  touchOffsetX = 0,
+  touchOffsetY = 0,
 }: Props) {
 
   const DEBUG_TOUCH = true; // ← 바로 여기! 딱 이곳이 정답
@@ -103,6 +109,20 @@ export default function PizzaSlice({
     onToggle();
   };
 
+  // 피자 조각 형태의 삼각형 Path 데이터 계산
+  // 부채꼴의 삼각형 근사치: Tip을 중앙(Bottom Center)으로 하고 위로 퍼지는 형태
+  const R = touchSize;
+  const halfBase = (R / 2) * Math.tan((30 * Math.PI) / 180); // 60도 부채꼴 가정
+  const centerX = R / 2;
+  const centerY = R / 2;
+
+  // 삼각형 정점: Tip(중앙), TopLeft, TopRight
+  const p1 = { x: centerX, y: centerY };          // Tip (피자 중심부)
+  const p2 = { x: centerX - halfBase, y: 0 };    // Outer Left
+  const p3 = { x: centerX + halfBase, y: 0 };    // Outer Right
+
+  const trianglePath = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y} Z`;
+
   return (
     <Animated.View
       style={[
@@ -113,137 +133,123 @@ export default function PizzaSlice({
       ]}
       pointerEvents="box-none"
     >
-      {/* 🎯 터치 가능한 실제 영역 */}
-      <View
-        style={[
-          {
-            width: touchSize,
-            height: touchSize,
-            justifyContent: "center",
-            alignItems: "center",
-          },
-          DEBUG_TOUCH && {
-            backgroundColor: "rgba(0,255,0,0.35)",
-            borderWidth: 1,
-            borderColor: "green",
-          },
-        ]}
-        hitSlop={0}
+      {/* 🎯 터치 영역용 Svg */}
+      <Animated.View
+        style={{
+          width: touchSize,
+          height: touchSize,
+          transform: [
+            { translateX: touchOffsetX * factor },
+            { translateY: touchOffsetY * factor },
+            { rotate: `${sliceRotation + touchRotationOffset}deg` },
+            { scale },
+          ],
+          position: "absolute",
+        }}
         pointerEvents="box-none"
       >
-        <View
-          style={{
-            position: "absolute",
-            width: touchSize,
-            height: touchSize,
-          }}
-          pointerEvents="box-none"
+        <Svg
+          width={touchSize}
+          height={touchSize}
+          viewBox={`0 0 ${touchSize} ${touchSize}`}
+          pointerEvents="none"
         >
-          <Svg
-            width={touchSize}
-            height={touchSize}
-            viewBox={`0 0 ${touchSize} ${touchSize}`}
-            pointerEvents="box-none"
-            style={{
-              transform: [{ rotate: `${sliceRotation}deg` }],
-            }}
-          >
-            {/* 피자 조각 모양의 Path (부채꼴: 중심에서 위로, 그리고 왼쪽으로 60도) */}
-            <Path
-              d={`M ${touchSize / 2} ${touchSize / 2}
-                 L ${touchSize / 2} 0
-                 A ${touchSize / 2} ${touchSize / 2} 0 0 0 ${touchSize / 2 - (touchSize / 2) * Math.sin(Math.PI / 3)} ${touchSize / 2 - (touchSize / 2) * Math.cos(Math.PI / 3)}
-                 Z`}
-              fill={DEBUG_TOUCH ? "rgba(0,255,0,0.35)" : "transparent"}
-              stroke={DEBUG_TOUCH ? "green" : "transparent"}
-              strokeWidth={1}
-              onPress={handlePress}
-            />
-          </Svg>
-        </View>
+          <Path
+            d={trianglePath}
+            fill={DEBUG_TOUCH ? "rgba(0,255,0,0.35)" : "transparent"}
+            stroke={DEBUG_TOUCH ? "green" : "transparent"}
+            strokeWidth={1}
+            onPress={handlePress}
+          />
+        </Svg>
+      </Animated.View>
 
-        {/* 🍕 실제 조각 이미지 */}
-        <Animated.View
+      {/* 🍕 실제 조각 이미지 */}
+      <Animated.View
+        style={{
+          width: finalSize,
+          height: finalSize,
+          justifyContent: "center",
+          alignItems: "center",
+          position: "absolute",
+          transform: [{ scale }, { rotate: `${sliceRotation}deg` }],
+        }}
+        pointerEvents="none"
+      >
+        <Image
+          source={source}
           style={{
             width: finalSize,
             height: finalSize,
-            justifyContent: "center",
-            alignItems: "center",
-            position: "absolute",
           }}
-          pointerEvents="none"
-        >
-          <Animated.Image
-            source={source}
-            style={{
-              width: finalSize,
-              height: finalSize,
-              transform: [{ scale }, { rotate: `${sliceRotation}deg` }],
-            }}
-            resizeMode="contain"
-          />
-        </Animated.View>
+          resizeMode="contain"
+        />
+      </Animated.View>
 
-        {/* 💬 라벨 */}
-        {label && (
-          <Animated.View
-            // pointerEvents="none"
-            style={[
-              styles.labelWrapper,
+      {/* 💬 라벨 */}
+      {label && (
+        <Animated.View
+          style={[
+            styles.labelWrapper,
+            {
+              opacity: labelOpacity,
+              transform: [
+                { translateX: translateXWithOffset },
+                { translateY: translateYWithOffset },
+                { scale: labelScale },
+              ],
+            },
+          ]}
+        >
+          <Pressable
+            onPress={handlePress}
+            style={({ pressed }) => [
+              styles.labelBubble,
               {
-                opacity: labelOpacity,
-                transform: [
-                  { translateX: translateXWithOffset },
-                  { translateY: translateYWithOffset },
-                  { scale: labelScale },
-                ],
+                borderRadius: 4 * factor,
+                paddingHorizontal: 6 * factor,
+                paddingVertical: 2 * factor,
               },
+              pressed && { opacity: 0.7 }
             ]}
           >
-            <View
-              style={[
-                styles.labelBubble,
-                {
-                  borderRadius: 4 * factor,
-                  paddingHorizontal: 6 * factor,
-                  paddingVertical: 2 * factor,
-                },
-              ]}
-            >
-              <View style={styles.labelInner}>
-                {labelIconSource && (
-                  <Image
-                    source={labelIconSource}
-                    style={{
-                      width: 10 * factor,
-                      height: 10 * factor,
-                      marginRight: 4 * factor,
-                    }}
-                  />
-                )}
-                <Text
-                  style={[styles.labelText, { fontSize: 13 * factor }]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-              </View>
+            <View style={styles.labelInner}>
+              {labelIconSource && (
+                <Image
+                  source={labelIconSource}
+                  style={{
+                    width: 10 * factor,
+                    height: 10 * factor,
+                    marginRight: 4 * factor,
+                  }}
+                />
+              )}
+              <Text
+                style={[styles.labelText, { fontSize: 13 * factor }]}
+                numberOfLines={1}
+              >
+                {label}
+              </Text>
             </View>
-          </Animated.View>
-        )}
-      </View>
+          </Pressable>
+        </Animated.View>
+      )}
     </Animated.View>
   );
 
 }
 
 const styles = StyleSheet.create({
-  sliceContainer: { position: "absolute" },
+  sliceContainer: {
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   labelWrapper: { position: "absolute" },
 
   labelBubble: {
-    backgroundColor: "rgba(255,255,255,0.7)",
+    backgroundColor: "rgba(255,255,255,0.85)", // 🌫️ 배경 딤과 어울리도록 다시 약간 투명하게 변경
     shadowColor: "#4f4f4fff",
     shadowOpacity: 0.1,
     shadowOffset: { width: 1, height: 1 },

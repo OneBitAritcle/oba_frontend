@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { apiClient } from "../../../src/api/apiClient";
 
 // ---------------------------------------------------------
@@ -29,6 +30,7 @@ type HistoryItem = {
 
 export default function WrongArticlesPage() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   // ---------------------------------------------------------
   // 상태 관리 (State)
@@ -49,7 +51,7 @@ export default function WrongArticlesPage() {
       const res = await apiClient.get("/my/wrong-answers");
       setHistoryData(res.data);
 
-      const cats = Array.from(new Set(res.data.map((h: HistoryItem) => h.category_name)));
+      const cats = Array.from(new Set(res.data.map((h: HistoryItem) => h.category_name))) as string[];
       setCategories(["All", ...cats]);
     } catch (error) {
       console.error("데이터 로딩 실패:", error);
@@ -73,10 +75,16 @@ export default function WrongArticlesPage() {
   // 리스트 헤더 (필터 + 정렬 포함)
   // ---------------------------------------------------------
   const renderHeader = () => (
-    <View style={styles.headerSection}>
-      <View style={styles.timelineHeader}>
-        <Text style={styles.sectionTitle}>틀린 기사 다시보기</Text>
-        <Text style={styles.sectionSubtitle}>최근 1년의 기사를 확인하세요</Text>
+    <View style={[styles.headerSection, { paddingTop: insets.top + 10 }]}>
+      <View style={styles.navBar}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
+        </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>틀린 기사 다시보기</Text>
+          <Text style={styles.headerSubtitle}>최근 1년의 기사를 확인하세요</Text>
+        </View>
+        <View style={{ width: 28 }} />
       </View>
 
       <View style={styles.filterBar}>
@@ -182,10 +190,32 @@ const styles = StyleSheet.create({
 
   // --- 1. 프로필 카드 스타일 ---
   headerSection: {
-    paddingTop: 60, // 상태바 여백
     paddingHorizontal: 20,
-    paddingBottom: 30,
-    backgroundColor: "#F5FAFF", // 스크롤 시 위쪽 배경 흰색 유지
+    paddingBottom: 20,
+    backgroundColor: "#F5FAFF",
+  },
+  navBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 0,
+  },
+  headerTitleContainer: {
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1A1A1A",
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#8E8E93",
+    marginTop: 2,
+  },
+  backButton: {
+    padding: 4,
+    marginLeft: -4,
   },
   trendyCard: {
     flexDirection: "row",
@@ -220,14 +250,7 @@ const styles = StyleSheet.create({
   userName: { fontSize: 22, fontWeight: "800", color: "#1A1A1A", marginRight: 8 },
   userId: { fontSize: 14, color: "#8E8E93", fontWeight: "500" },
 
-  // --- 2. 타임라인 헤더 (제목) ---
-  timelineHeader: {
-    paddingHorizontal: 24,
-    paddingBottom: 10,
-    backgroundColor: "#F5FAFF", // 리스트와 자연스럽게 연결
-  },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", marginBottom: 6 },
-  sectionSubtitle: { fontSize: 14, color: "#8E8E93", marginBottom: 20 },
+  // --- 2. 타임라인 헤더 (제외됨) ---
 
   // 필터/정렬 바
   filterBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },

@@ -29,7 +29,7 @@ type UserProfile = {
 export default function MyPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
+
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -38,7 +38,7 @@ export default function MyPage() {
   const [feedbackText, setFeedbackText] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
-  
+
   // ✅ 토스트 메시지 애니메이션 상태
   const fadeAnim = useRef(new Animated.Value(0)).current; // 초기 투명도 0
   const [toastVisible, setToastVisible] = useState(false);
@@ -70,13 +70,13 @@ export default function MyPage() {
 
   // ... (AsyncStorage 관련 함수들: saveFeedbackDraft, loadFeedbackDraft, deleteFeedbackDraft - 기존과 동일)
   const saveFeedbackDraft = async (text: string) => {
-    try { await AsyncStorage.setItem(FEEDBACK_STORAGE_KEY, text); } catch (e) {}
+    try { await AsyncStorage.setItem(FEEDBACK_STORAGE_KEY, text); } catch (e) { }
   };
   const loadFeedbackDraft = async (): Promise<string> => {
     try { return (await AsyncStorage.getItem(FEEDBACK_STORAGE_KEY)) || ""; } catch { return ""; }
   };
   const deleteFeedbackDraft = async () => {
-    try { await AsyncStorage.removeItem(FEEDBACK_STORAGE_KEY); } catch (e) {}
+    try { await AsyncStorage.removeItem(FEEDBACK_STORAGE_KEY); } catch (e) { }
   };
 
   useEffect(() => {
@@ -93,7 +93,7 @@ export default function MyPage() {
     if (feedbackText.trim() !== "") {
       saveFeedbackDraft(feedbackText);
     } else {
-        deleteFeedbackDraft();
+      deleteFeedbackDraft();
     }
     setFeedbackModalVisible(false);
   };
@@ -155,16 +155,16 @@ export default function MyPage() {
       // ✅ 백엔드 전송 시뮬레이션
       // await apiClient.post("/api/feedback", { content: feedbackText });
       await new Promise((resolve) => setTimeout(resolve, 800));
-      
+
       // 1. 저장된 내용 삭제
-      await deleteFeedbackDraft(); 
+      await deleteFeedbackDraft();
       // 2. 모달 닫기
       setFeedbackModalVisible(false);
       // 3. 텍스트 초기화
       setFeedbackText("");
       // 4. ✅ 토스트 메시지 띄우기 (Alert 대신 사용)
       showThankYouToast();
-      
+
     } catch (error) {
       Alert.alert("오류", "소리함 전송에 실패했습니다.");
     } finally {
@@ -178,10 +178,13 @@ export default function MyPage() {
     return (
       <View style={[styles.headerSection, { paddingTop: insets.top + 10 }]}>
         <View style={styles.navBar}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
-            </TouchableOpacity>
-            <View style={{ width: 28 }} />
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>마이페이지</Text>
+          </View>
+          <View style={{ width: 28 }} />
         </View>
 
         <TouchableOpacity style={styles.trendyCard} activeOpacity={0.9} onPress={openEditModal}>
@@ -207,8 +210,8 @@ export default function MyPage() {
           <Text style={styles.sectionTitle}>고객 소리함</Text>
           <Text style={styles.sectionDescription}>의견이나 건의사항을 알려주세요</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.feedbackButton} 
+        <TouchableOpacity
+          style={styles.feedbackButton}
           activeOpacity={0.8}
           onPress={openFeedbackModal}
         >
@@ -264,17 +267,17 @@ export default function MyPage() {
       </Modal>
 
       {/* 고객 소리함 모달 */}
-      <Modal 
-        animationType="slide" 
-        transparent={true} 
-        visible={feedbackModalVisible} 
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={feedbackModalVisible}
         onRequestClose={handleFeedbackModalClose}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.feedbackModalContent}>
             <View style={styles.feedbackHeader}>
               <Text style={styles.feedbackModalTitle}>고객 소리함</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.closeButton}
                 onPress={handleFeedbackModalClose}
                 disabled={isSubmittingFeedback}
@@ -314,17 +317,17 @@ export default function MyPage() {
             </View>
 
             <View style={styles.feedbackModalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.feedbackModalBtn, styles.feedbackCancelBtn]}
                 onPress={handleFeedbackModalClose}
                 disabled={isSubmittingFeedback}
               >
                 <Text style={styles.feedbackCancelText}>취소</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.feedbackModalBtn, 
-                  styles.feedbackSubmitBtn, 
+                  styles.feedbackModalBtn,
+                  styles.feedbackSubmitBtn,
                   (isSubmittingFeedback || feedbackText.trim() === "") && styles.submitBtnDisabled
                 ]}
                 onPress={handleSubmitFeedback}
@@ -344,7 +347,7 @@ export default function MyPage() {
       {/* ✅ 커스텀 토스트 메시지 (화면 하단) */}
       {toastVisible && (
         <Animated.View style={[styles.toastContainer, { opacity: fadeAnim }]}>
-          <Ionicons name="checkmark-circle" size={20} color="white" style={{marginRight: 8}} />
+          <Ionicons name="checkmark-circle" size={20} color="white" style={{ marginRight: 8 }} />
           <Text style={styles.toastText}>소중한 의견 감사합니다!</Text>
         </Animated.View>
       )}
@@ -354,11 +357,11 @@ export default function MyPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5FAFF" },
-  
-  headerSection: { 
-    paddingHorizontal: 20, 
-    paddingBottom: 24, 
-    backgroundColor: "#F5FAFF" 
+
+  headerSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    backgroundColor: "#F5FAFF"
   },
   navBar: {
     flexDirection: "row",
@@ -366,78 +369,86 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  headerTitleContainer: {
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1A1A1A",
+  },
   backButton: {
     padding: 4,
     marginLeft: -4,
   },
-  
-  trendyCard: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#ffffff", 
-    padding: 24, 
-    borderRadius: 24, 
-    ...Platform.select({ 
-      ios: { 
-        shadowColor: "#000", 
-        shadowOffset: { width: 0, height: 4 }, 
-        shadowOpacity: 0.08, 
-        shadowRadius: 16 
-      }, 
-      android: { elevation: 4 } 
-    }), 
-    borderWidth: 1, 
-    borderColor: "rgba(242, 244, 246, 0.8)", 
+
+  trendyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    padding: 24,
+    borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16
+      },
+      android: { elevation: 4 }
+    }),
+    borderWidth: 1,
+    borderColor: "rgba(242, 244, 246, 0.8)",
   },
   profileLeft: { marginRight: 20 },
-  trendyImage: { 
-    width: 76, 
-    height: 76, 
-    borderRadius: 38, 
-    backgroundColor: "#F2F4F6", 
-    borderWidth: 3, 
-    borderColor: "#fff" 
+  trendyImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#F2F4F6",
+    borderWidth: 3,
+    borderColor: "#fff"
   },
   profileRight: { flex: 1, justifyContent: "center" },
   nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
   userName: { fontSize: 20, fontWeight: "700", color: "#1A1A1A", marginRight: 6 },
   userId: { fontSize: 14, color: "#8E8E93", fontWeight: "400" },
-  
+
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { marginTop: 12, color: "#8E8E93", fontSize: 15 },
-  
-  feedbackSection: { 
-    marginTop: 32, 
-    marginHorizontal: 20, 
-    paddingBottom: 20 
+
+  feedbackSection: {
+    marginTop: 32,
+    marginHorizontal: 20,
+    paddingBottom: 20
   },
   sectionHeader: { marginBottom: 16 },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
-    color: "#1A1A1A", 
-    marginBottom: 6 
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    marginBottom: 6
   },
-  sectionDescription: { 
-    fontSize: 14, 
-    color: "#8E8E93", 
-    fontWeight: "400" 
+  sectionDescription: {
+    fontSize: 14,
+    color: "#8E8E93",
+    fontWeight: "400"
   },
-  feedbackButton: { 
+  feedbackButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderRadius: 16,
-    ...Platform.select({ 
-      ios: { 
-        shadowColor: "#000", 
-        shadowOffset: { width: 0, height: 2 }, 
-        shadowOpacity: 0.05, 
-        shadowRadius: 8 
-      }, 
-      android: { elevation: 2 } 
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8
+      },
+      android: { elevation: 2 }
     }),
     borderWidth: 1,
     borderColor: "#F2F4F6",
@@ -448,66 +459,66 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F8FF",
     borderRadius: 8,
   },
-  feedbackButtonText: { 
-    fontSize: 16, 
-    fontWeight: "600", 
+  feedbackButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#1A1A1A",
     flex: 1,
   },
 
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: "rgba(0,0,0,0.5)", 
-    justifyContent: "center", 
-    alignItems: "center" 
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center"
   },
-  modalContent: { 
-    width: "85%", 
-    backgroundColor: "white", 
-    borderRadius: 24, 
-    padding: 24, 
-    alignItems: "center", 
-    elevation: 5 
+  modalContent: {
+    width: "85%",
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    elevation: 5
   },
-  modalTitle: { 
-    fontSize: 18, 
-    fontWeight: "700", 
-    marginBottom: 20, 
-    color: "#1A1A1A" 
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 20,
+    color: "#1A1A1A"
   },
-  input: { 
-    width: "100%", 
-    height: 50, 
-    borderWidth: 1, 
-    borderColor: "#E5E5EA", 
-    borderRadius: 12, 
-    paddingHorizontal: 16, 
-    marginBottom: 24, 
-    fontSize: 16, 
-    backgroundColor: "#FAFBFC" 
+  input: {
+    width: "100%",
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    fontSize: 16,
+    backgroundColor: "#FAFBFC"
   },
-  modalButtons: { 
-    flexDirection: "row", 
-    width: "100%", 
-    gap: 12 
+  modalButtons: {
+    flexDirection: "row",
+    width: "100%",
+    gap: 12
   },
-  modalBtn: { 
-    flex: 1, 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    alignItems: "center", 
-    justifyContent: "center" 
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center"
   },
   cancelBtn: { backgroundColor: "#F2F4F6" },
   saveBtn: { backgroundColor: "#007AFF" },
   cancelText: { fontSize: 16, color: "#666", fontWeight: "600" },
   saveText: { fontSize: 16, color: "white", fontWeight: "600" },
 
-  feedbackModalContent: { 
-    width: "90%", 
-    backgroundColor: "white", 
-    borderRadius: 28, 
-    padding: 24, 
+  feedbackModalContent: {
+    width: "90%",
+    backgroundColor: "white",
+    borderRadius: 28,
+    padding: 24,
     paddingBottom: 28,
     maxHeight: "85%",
     elevation: 8,
@@ -526,23 +537,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 12,
   },
-  closeButton: { 
+  closeButton: {
     padding: 4,
     marginRight: -4,
   },
-  feedbackModalTitle: { 
-    fontSize: 22, 
-    fontWeight: "800", 
+  feedbackModalTitle: {
+    fontSize: 22,
+    fontWeight: "800",
     color: "#1A1A1A",
   },
-  feedbackModalDescription: { 
-    fontSize: 14, 
-    color: "#666", 
+  feedbackModalDescription: {
+    fontSize: 14,
+    color: "#666",
     fontWeight: "400",
     marginBottom: 20,
     lineHeight: 20,
   },
-  feedbackInput: { 
+  feedbackInput: {
     width: "100%",
     minHeight: 180,
     borderWidth: 1,
@@ -554,7 +565,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     backgroundColor: "#FAFBFC",
     color: "#1A1A1A",
-    textAlignVertical: "top", 
+    textAlignVertical: "top",
   },
   charCountContainer: {
     flexDirection: "row",
@@ -567,25 +578,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8E8E93",
   },
-  charCountWarning: { 
+  charCountWarning: {
     color: "#FF3B30",
   },
-  feedbackModalButtons: { 
-    flexDirection: "row", 
-    width: "100%", 
+  feedbackModalButtons: {
+    flexDirection: "row",
+    width: "100%",
     gap: 12,
   },
-  feedbackModalBtn: { 
+  feedbackModalBtn: {
     flex: 1,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  feedbackCancelBtn: { 
+  feedbackCancelBtn: {
     backgroundColor: "#F2F4F6",
   },
-  feedbackSubmitBtn: { 
+  feedbackSubmitBtn: {
     backgroundColor: "#007AFF",
     shadowColor: "#007AFF",
     shadowOffset: { width: 0, height: 4 },
@@ -593,21 +604,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  submitBtnDisabled: { 
+  submitBtnDisabled: {
     opacity: 0.6,
     backgroundColor: "#A0C8FF",
     shadowOpacity: 0,
     elevation: 0,
   },
-  feedbackCancelText: { 
-    fontSize: 16, 
-    color: "#666", 
-    fontWeight: "600" 
+  feedbackCancelText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "600"
   },
-  feedbackSubmitText: { 
-    fontSize: 16, 
-    color: "white", 
-    fontWeight: "700" 
+  feedbackSubmitText: {
+    fontSize: 16,
+    color: "white",
+    fontWeight: "700"
   },
 
   // ✅ 토스트 스타일 추가

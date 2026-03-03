@@ -118,9 +118,12 @@ export default function Home() {
           <Animated.ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={SNAP_INTERVAL}
+            snapToOffsets={articles.map((_, i) => i * SNAP_INTERVAL)}
+            snapToAlignment="start"
             decelerationRate="fast"
+            disableIntervalMomentum={true}
             scrollEventThrottle={16}
+            pagingEnabled={false}
             contentContainerStyle={{ paddingHorizontal: SIDE_SPACING }}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { x: scrollX } } }],

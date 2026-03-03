@@ -78,11 +78,12 @@
 // oba_fronted/app/article/components/TabBar.tsx
 
 // 제안: 아이폰 스타일의 슬라이딩 탭바
-import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabBar({ activeTab, setActiveTab, goHome }) {
+  const insets = useSafeAreaInsets();
   // '요약' 제거하고 3개 탭만 유지
   const tabs = ["기사", "키워드", "퀴즈"];
 
@@ -90,12 +91,12 @@ export default function TabBar({ activeTab, setActiveTab, goHome }) {
     <View style={styles.container}>
       {/* 배경에 블러 효과 적용 */}
       <BlurView intensity={30} tint="light" style={styles.blurBar}>
-        <SafeAreaView edges={["top"]} style={styles.safeArea}>
+        <View style={[styles.safeArea, { paddingTop: insets.top + 10 }]}>
           <View style={styles.innerContainer}>
-            
+
             {/* 1. 뒤로가기 버튼 */}
-            <TouchableOpacity 
-              onPress={goHome} 
+            <TouchableOpacity
+              onPress={goHome}
               style={styles.backBtn}
               activeOpacity={0.6}
             >
@@ -131,9 +132,9 @@ export default function TabBar({ activeTab, setActiveTab, goHome }) {
 
             {/* 오른쪽 여백 밸런스 (뒤로가기 버튼만큼 공간 확보) */}
             <View style={styles.dummySpace} />
-            
+
           </View>
-        </SafeAreaView>
+        </View>
       </BlurView>
     </View>
   );
@@ -219,6 +220,6 @@ const styles = StyleSheet.create({
 
   // 레이아웃 균형용 더미
   dummySpace: {
-    width: 40, 
+    width: 40,
   },
 });

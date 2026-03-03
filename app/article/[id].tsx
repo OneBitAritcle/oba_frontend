@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { View, Text, ActivityIndicator, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TabBar from "./components/TabBar";
 import ArticleTab from "./components/ArticleTab";
 import SummaryTab from "./components/SummaryTab";
@@ -9,17 +10,32 @@ import KeywordTab from "./components/KeywordTab";
 import QuizTab from "./components/QuizTab";
 import { apiClient } from "../../src/api/apiClient";
 
+interface Quiz {
+  question: string;
+  options: string[];
+  answer: number;
+}
+
+interface Article {
+  articleId: string;
+  title: string;
+  summary: string;
+  keywords: string[];
+  quizzes: Quiz[];
+}
+
 export default function ArticleDetail() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("기사");
-  const [article, setArticle] = useState(null);
+  const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 퀴즈 상태
-  const [selected, setSelected] = useState({});
-  const [isGraded, setIsGraded] = useState([]);
-  const [isOpen, setIsOpen] = useState({});
+  const [selected, setSelected] = useState<Record<number, number>>({});
+  const [isGraded, setIsGraded] = useState<boolean[]>([]);
+  const [isOpen, setIsOpen] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (!id) return;
@@ -54,41 +70,41 @@ export default function ArticleDetail() {
   if (!article) return null;
 
   // 퀴즈 핸들러
-  const handleSelect = (q, o) => setSelected(prev => ({ ...prev, [q]: o }));
-  const handleGrade = (qIndex) => {
-    setIsGraded(prev => { 
-      const updated = [...prev]; 
-      updated[qIndex] = true; 
-      return updated; 
+  const handleSelect = (q: number, o: number) => setSelected(prev => ({ ...prev, [q]: o }));
+  const handleGrade = (qIndex: number) => {
+    setIsGraded(prev => {
+      const updated = [...prev];
+      updated[qIndex] = true;
+      return updated;
     });
     setIsOpen(prev => ({ ...prev, [qIndex]: true }));
   };
-  const toggleOpen = (qIndex) => setIsOpen(prev => ({ ...prev, [qIndex]: !prev[qIndex] }));
+  const toggleOpen = (qIndex: number) => setIsOpen(prev => ({ ...prev, [qIndex]: !prev[qIndex] }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: "transparent", paddingTop: 10 }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <TabBar activeTab={activeTab} setActiveTab={setActiveTab} goHome={() => router.push("/")} />
-      
+
       {activeTab === "기사" && (
-        <ArticleTab 
-          article={article} 
-          onMoveToQuiz={() => setActiveTab("퀴즈")} 
+        <ArticleTab
+          article={article}
+          onMoveToQuiz={() => setActiveTab("퀴즈")}
         />
       )}
-      
+
       {activeTab === "요약" && <SummaryTab summary={article.summary} />}
-      
+
       {activeTab === "키워드" && <KeywordTab keywords={article.keywords} />}
-      
+
       {activeTab === "퀴즈" && (
-        <QuizTab 
-          quizList={article.quizzes} 
-          selected={selected} 
-          isGraded={isGraded} 
+        <QuizTab
+          quizList={article.quizzes}
+          selected={selected}
+          isGraded={isGraded}
           isOpen={isOpen}
-          handleSelect={handleSelect} 
-          handleGrade={handleGrade} 
-          toggleOpen={toggleOpen} 
+          handleSelect={handleSelect}
+          handleGrade={handleGrade}
+          toggleOpen={toggleOpen}
         />
       )}
     </View>

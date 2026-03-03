@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 interface HomeHeaderProps {
     user: {
@@ -12,6 +13,7 @@ interface HomeHeaderProps {
 }
 
 export default function HomeHeader({ user, streak, date }: HomeHeaderProps) {
+    const router = useRouter();
     const days = ["월", "화", "수", "목", "금", "토", "일"];
     const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
@@ -22,15 +24,23 @@ export default function HomeHeader({ user, streak, date }: HomeHeaderProps) {
                     <View style={styles.profileInfo}>
                         <View style={styles.avatarContainer}>
                             <Image
-                                source={require("../../assets/knight/basic_profile.png")}
+                                source={
+                                    user.profileImage && (user.profileImage.startsWith("http") || user.profileImage.startsWith("https"))
+                                        ? { uri: user.profileImage }
+                                        : require("../../assets/knight/basic_profile.png")
+                                }
                                 style={styles.avatar}
                             />
                         </View>
                         <View style={styles.textContainer}>
-                            <View style={styles.nicknameRow}>
+                            <TouchableOpacity
+                                style={styles.nicknameRow}
+                                onPress={() => router.push("/my")}
+                                activeOpacity={0.6}
+                            >
                                 <Text style={styles.nickname}>{user.nickname}</Text>
                                 <Ionicons name="chevron-forward" size={18} color="#999" />
-                            </View>
+                            </TouchableOpacity>
                             <Text style={styles.dateText}>{date}</Text>
                             <View style={styles.streakRow}>
                                 <Text style={styles.streakIcon}>🔥</Text>

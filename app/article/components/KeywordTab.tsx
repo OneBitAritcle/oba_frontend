@@ -12,10 +12,14 @@ const pizzaImages = [
 
 export default function KeywordTab({ keywords }) {
   return (
-    <ScrollView contentContainerStyle={{ padding: 20 }}>
-      {keywords.map((word, index) => (
-        <View key={index} style={{ marginBottom: 18, padding: 16, backgroundColor: "#fff", borderRadius: 14 }}>
-          <Text style={{ fontSize: 16, fontWeight: "700" }}>{word}</Text>
+    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 10 }}>
+      {keywords.map((kw, index) => (
+        <View key={index} style={styles.keywordBox}>
+          <View style={styles.row}>
+            <Image source={pizzaImages[index % 4]} style={styles.pizzaImg} />
+            <Text style={styles.word}>{kw.name}</Text>
+          </View>
+          <Text style={styles.description}>{kw.description}</Text>
         </View>
       ))}
     </ScrollView>
@@ -52,5 +56,12 @@ const styles = StyleSheet.create({
     width: 23,
     height: 23,
     marginRight: 6,
+  },
+  description: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+    marginTop: 4,
+    marginLeft: 29, // Align with the word (pizzaImg width + marginRight)
   },
 });

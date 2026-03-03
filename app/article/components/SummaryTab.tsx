@@ -12,7 +12,7 @@ export default function SummaryTab({ summary }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: { padding: 20, paddingTop: 10 },
 
   title: {
     fontSize: 20,

@@ -3,7 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View } from "react-native";
 import "react-native-reanimated";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppBackground from "./components/AppBackground";
 
 // 🔥 수정된 테마 설정 (오타 제거됨)
@@ -19,7 +19,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={MyTheme}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: "transparent" }}>
+        <View style={{ flex: 1, backgroundColor: "transparent" }}>
           {/* 전체 배경 적용 */}
           <View style={{ flex: 1, backgroundColor: "transparent" }}>
             <AppBackground />
@@ -36,7 +36,7 @@ export default function RootLayout() {
               </Stack>
             </View>
           </View>
-        </SafeAreaView>
+        </View>
         <StatusBar style="auto" />
       </ThemeProvider>
     </SafeAreaProvider>

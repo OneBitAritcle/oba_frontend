@@ -48,7 +48,7 @@ export default function usePizzaAnimation() {
   const CLOSED = {
     slice1: { x: -27.5 * factor, y: -37.1 * factor },
     slice2: { x: -38.4 * factor, y: -34.8 * factor },
-    slice3: { x: -39.2 * factor, y: -15.2 * factor },
+    slice3: { x: -38.9 * factor, y: -15.4 * factor },
   };
 
   const OPEN = {

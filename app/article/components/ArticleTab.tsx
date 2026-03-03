@@ -101,14 +101,14 @@ export default function ArticleTab({ article, onMoveToQuiz }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 10 }} showsVerticalScrollIndicator={false}>
       {/* --- 헤더 --- */}
       <View style={styles.headerContainer}>
         <View style={styles.categoryWrapper}>
           <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
             {categoryList.map((cat, idx) => (
               <View key={idx} style={styles.categoryChip}>
-                <Text style={styles.categoryText}>{cat}</Text>
+                <Text style={styles.categoryText}>{cat.name || cat}</Text>
               </View>
             ))}
           </ScrollView>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   // --- 헤더 스타일 ---
   headerContainer: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 10,
     paddingBottom: 20,
   },
   categoryWrapper: { marginBottom: 10 },

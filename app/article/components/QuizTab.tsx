@@ -345,7 +345,7 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 80 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingTop: 10, paddingBottom: 80 }}>
         <Text style={styles.header}>Quiz</Text>
 
         {quizList.map((quiz, qIndex) => {
@@ -370,16 +370,16 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
                       styles.option,
                       selectedOption && styles.selected,
                       graded &&
-                        oIndex === quiz.answer && {
-                          backgroundColor: "#DFF5CC",
-                          borderColor: "#8BC34A",
-                        },
+                      oIndex === quiz.answer && {
+                        backgroundColor: "#DFF5CC",
+                        borderColor: "#8BC34A",
+                      },
                       graded &&
-                        selectedOption &&
-                        oIndex !== quiz.answer && {
-                          backgroundColor: "#FDDCDC",
-                          borderColor: "#E57373",
-                        },
+                      selectedOption &&
+                      oIndex !== quiz.answer && {
+                        backgroundColor: "#FDDCDC",
+                        borderColor: "#E57373",
+                      },
                     ]}
                   >
                     <Text style={styles.optionText}>{opt}</Text>

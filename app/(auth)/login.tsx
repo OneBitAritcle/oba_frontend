@@ -1,9 +1,11 @@
 import { View, Text, TouchableOpacity, Image, StyleSheet, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Login() {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* 로고 / 캐릭터 */}
       <Image
         source={require("../../assets/knight/hand.png")}

@@ -45,9 +45,9 @@ export default function CategoryProgress() {
         //    import { apiClient } from "../../../../src/api/apiClient";
         //    const response = await apiClient.get("/api/report/category-progress");
         //    setCategories(response.data);
-        
+
         // --- [테스트용 더미 데이터 로직] ---
-        await new Promise((resolve) => setTimeout(resolve, 800)); 
+        await new Promise((resolve) => setTimeout(resolve, 800));
         const mockData: CategoryData[] = [
           { category: "Tech", progress: 72, color: "#87CEEB" },
           { category: "AI", progress: 80, color: "#D4845C" },
@@ -98,7 +98,6 @@ export default function CategoryProgress() {
       <View style={styles.listContainer}>
         {categories.map((item, index) => (
           <View key={index} style={styles.categoryRow}>
-            
             {/* 1. 카테고리명 (고정 너비) */}
             <Text style={styles.categoryName} numberOfLines={1}>
               {item.category}
@@ -138,14 +137,14 @@ const styles = StyleSheet.create({
     padding: 24,           // 내부 여백 통일
     marginHorizontal: 20,  // 화면 좌우 여백 통일
     marginVertical: 12,    // 카드 간 상하 간격 통일
-    
+
     // 그림자 (Shadow) 통일
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
-    minHeight: 200, 
+    minHeight: 200,
   },
   centerContent: {
     justifyContent: "center",
@@ -164,7 +163,7 @@ const styles = StyleSheet.create({
   listContainer: {
     gap: 16, // 아이템 간 간격 (React Native 0.71+)
   },
-  
+
   // 개별 행 (Row)
   categoryRow: {
     flexDirection: "row",

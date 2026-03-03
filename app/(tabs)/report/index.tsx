@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
   Pressable,
   StatusBar,
 } from "react-native";
@@ -192,9 +193,9 @@ export default function ReportPage() {
 
       {/* 1. 커스텀 헤더 */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Pressable onPress={() => router.push("/(tabs)")} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </Pressable>
+        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
+        </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>마이 리포트</Text>
           <Text style={styles.headerSubtitle}>나의 학습 기록을 분석해드려요</Text>
@@ -207,40 +208,17 @@ export default function ReportPage() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 2. 상단 통계 카드 */}
         <ReportStats
           consecutiveDays={reportData.consecutiveDays}
           maxConsecutiveDays={reportData.maxConsecutiveDays}
           perfectDays={reportData.perfectDays}
         />
-
-        {/* 3. 전체 진도율 */}
         <ProgressBar
           solvedCount={reportData.solvedCount}
           totalCount={reportData.totalCount}
         />
-
-        {/* 4. 학습 성장 곡선 (외부 컴포넌트) */}
-        {/* 
-          🚀 DailyChart 컴포넌트
-          - 📍 API 엔드포인트: GET /api/report/daily-stats
-          - 현재: 내부적으로 Dummy 데이터 및 API 호출 시뮬레이션 (DailyChart.tsx 참고)
-          - 향후: 부모에서 props로 전달하도록 리팩토링 권장
-          - 참고 명세: /BACKEND_API_SPEC.md - "3️⃣ 요일별 정답률 조회"
-        */}
         <DailyChart />
-
-        {/* 5. 카테고리별 정답률 (외부 컴포넌트) */}
-        {/* 
-          🚀 CategoryProgress 컴포넌트
-          - 📍 API 엔드포인트: GET /api/report/category-progress
-          - 현재: 내부적으로 Dummy 데이터 및 API 호출 시뮬레이션 (CategoryProgress.tsx 참고)
-          - 향후: 부모에서 props로 전달하도록 리팩토링 권장
-          - 참고 명세: /BACKEND_API_SPEC.md - "4️⃣ 카테고리별 정답률 조회"
-        */}
         <CategoryProgress />
-
-        {/* 하단 여백 */}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
