@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { apiClient } from "../../../src/api/apiClient";
 
 // 컴포넌트 임포트
 // 경로가 맞는지 확인해주세요. (예: components 폴더 구조에 따라 수정 필요)
@@ -116,7 +117,7 @@ const ProgressBar = ({
   totalCount: number;
 }) => {
   const percentage = totalCount > 0 ? (solvedCount / totalCount) * 100 : 0;
-  
+
   return (
     <View style={styles.progressSection}>
       <View style={styles.progressHeader}>
@@ -125,11 +126,11 @@ const ProgressBar = ({
           <Text style={styles.highlightText}>{Math.round(percentage)}%</Text> 달성
         </Text>
       </View>
-      
+
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${percentage}%` }]} />
       </View>
-      
+
       <Text style={styles.progressDetail}>
         총 {totalCount}개 중 {solvedCount}개 완료
       </Text>
@@ -145,47 +146,28 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    /**
-     * 📌 리포트 데이터 로드 함수
-     * 
-     * ✅ 중요사항:
-     * - 모든 API는 JWT 토큰에서 user_id를 자동으로 추출
-     * - Query Parameter로 user_id를 전달하지 않음
-     * - Authorization 헤더는 apiClient에서 자동으로 추가
-     * 
-     * 🚀 API 연동 방법 (주석 해제하여 사용):
-     * 
-     * import { apiClient } from "../../src/api/apiClient";
-     * 
-     * const [statsRes, progressRes, dailyRes, categoryRes] = await Promise.all([
-     *   apiClient.get("/api/report/stats"),              // user_id 자동 추출
-     *   apiClient.get("/api/report/progress"),          // user_id 자동 추출
-     *   apiClient.get("/api/report/daily-stats?days=7"), // user_id 자동 추출 + days 전달
-     *   apiClient.get("/api/report/category-progress"),  // user_id 자동 추출
-     * ]);
-     * 
-     * setReportData({
-     *   consecutiveDays: statsRes.data.consecutiveDays,
-     *   maxConsecutiveDays: statsRes.data.maxConsecutiveDays,
-     *   perfectDays: statsRes.data.perfectDays,
-     *   solvedCount: progressRes.data.solvedCount,
-     *   totalCount: progressRes.data.totalCount,
-     *   dailyStats: dailyRes.data,
-     *   categoryProgress: categoryRes.data,
-     * });
-     */
-    
     const fetchReportData = async () => {
       try {
         setLoading(true);
-        // ⏳ 현재는 임시 지연으로 테스트
-        // await new Promise((resolve) => setTimeout(resolve, 500));
-        
-        // 📍 Dummy 데이터로 UI 테스트 (백엔드 준비 전)
-        setReportData(DUMMY_REPORT_DATA);
+
+        const [statsRes, progressRes, dailyRes, categoryRes] = await Promise.all([
+          apiClient.get("/api/report/stats"),
+          apiClient.get("/api/report/progress"),
+          apiClient.get("/api/report/daily-stats?days=7"),
+          apiClient.get("/api/report/category-progress"),
+        ]);
+
+        setReportData({
+          consecutiveDays: statsRes.data.consecutiveDays,
+          maxConsecutiveDays: statsRes.data.maxConsecutiveDays,
+          perfectDays: statsRes.data.perfectDays,
+          solvedCount: statsRes.data.solvedCount || progressRes.data.solvedCount,
+          totalCount: statsRes.data.totalCount || progressRes.data.totalCount,
+          dailyStats: dailyRes.data,
+          categoryProgress: categoryRes.data,
+        });
       } catch (error) {
         console.error("❌ [Report] 데이터 로드 실패:", error);
-        // 에러 발생 시에도 Dummy 데이터로 진행하여 UI 확인 가능
         setReportData(DUMMY_REPORT_DATA);
       } finally {
         setLoading(false);
@@ -207,7 +189,7 @@ export default function ReportPage() {
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      
+
       {/* 1. 커스텀 헤더 */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.push("/(tabs)")} style={styles.backButton}>
@@ -246,7 +228,7 @@ export default function ReportPage() {
           - 향후: 부모에서 props로 전달하도록 리팩토링 권장
           - 참고 명세: /BACKEND_API_SPEC.md - "3️⃣ 요일별 정답률 조회"
         */}
-        <DailyChart /> 
+        <DailyChart />
 
         {/* 5. 카테고리별 정답률 (외부 컴포넌트) */}
         {/* 
@@ -257,7 +239,7 @@ export default function ReportPage() {
           - 참고 명세: /BACKEND_API_SPEC.md - "4️⃣ 카테고리별 정답률 조회"
         */}
         <CategoryProgress />
-        
+
         {/* 하단 여백 */}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -277,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F8F9FA",
   },
-  
+
   // Header
   header: {
     flexDirection: "row",
