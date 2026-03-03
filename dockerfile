@@ -1,4 +1,4 @@
-FROM node:20-bullseye
+FROM node:20-bullseye AS builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json ./
 
 # 2) npm install
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # 3) 나머지 전체 소스 복사
 COPY . .
