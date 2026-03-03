@@ -53,28 +53,28 @@ export default function PizzaSlice({
 
   const DEBUG_TOUCH = true; // ← 바로 여기! 딱 이곳이 정답
   const router = useRouter();
-  
+
 
   // 라벨 Fade-in
   const labelOpacity = anim
     ? anim.interpolate({
-        inputRange: [0, 0.6, 1],
-        outputRange: [0, 0, 1],
-      })
+      inputRange: [0, 0.6, 1],
+      outputRange: [0, 0, 1],
+    })
     : 0;
 
   const baseSlideX = anim
     ? anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [10 * factor, 0],
-      })
+      inputRange: [0, 1],
+      outputRange: [10 * factor, 0],
+    })
     : 0;
 
   const labelScale = anim
     ? anim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.9, 1],
-      })
+      inputRange: [0, 1],
+      outputRange: [0.9, 1],
+    })
     : 1;
 
   const finalSize = sliceSize * factor;
@@ -190,7 +190,7 @@ export default function PizzaSlice({
                   />
                 )}
                 <Text
-                  style={[styles.labelText, { fontSize: 9 * factor }]}
+                  style={[styles.labelText, { fontSize: 13 * factor }]}
                   numberOfLines={1}
                 >
                   {label}
