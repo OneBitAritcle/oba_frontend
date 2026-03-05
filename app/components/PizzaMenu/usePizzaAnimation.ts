@@ -1,88 +1,112 @@
-import { useRef, useState } from "react";
+﻿import { useRef, useState } from "react";
 import { Animated, useWindowDimensions } from "react-native";
+
+type Point = { x: number; y: number };
+type SliceKey = "s1" | "s2" | "s3";
+
+const addPoint = (a: Point, b: Point): Point => ({
+  x: a.x + b.x,
+  y: a.y + b.y,
+});
 
 export default function usePizzaAnimation() {
   const anim = useRef(new Animated.Value(0)).current;
+  const [isOpen, setIsOpen] = useState(false);
   const { width, height } = useWindowDimensions();
-
-  // 아이폰 미니 기준 스케일
   const factor = Math.min(width, height) / 390;
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggle = () => {
-    const next = !isOpen;
-    setIsOpen(next);
-
+  const run = (toValue: 0 | 1) => {
     Animated.spring(anim, {
-      toValue: next ? 1 : 0,
+      toValue,
       friction: 6,
-      tension: 60,
+      tension: 62,
       useNativeDriver: true,
     }).start();
   };
 
-  /* -------------------------------
-   * ✅ 닫힌 상태에서 전체 피자(베이스 포함)를 좌상단으로 조금 이동
-   * - 원하는 만큼만 바꾸면 됨 (지금은 약 20px)
-   * ----------------------------- */
-  const CLOSED_SHIFT = { x: -20 * factor, y: -20 * factor };
-
-  // ✅ 열렸을 때 베이스 위치 (닫힌 위치보다 조금 더 왼쪽 위로 이동)
-  const OPEN_SHIFT_BASE = { x: -20 * factor, y: -20 * factor };
-
-  // ✅ 베이스(조각 외 나머지 피자) 이동
-  const baseX = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [CLOSED_SHIFT.x, OPEN_SHIFT_BASE.x],
-  });
-  const baseY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [CLOSED_SHIFT.y, OPEN_SHIFT_BASE.y],
-  });
-
-  /* -------------------------------
-   * 닫힌 상태: (조각 좌표는 그대로 두거나)
-   * - 조각도 같이 이동시키고 싶으면 CLOSED에도 CLOSED_SHIFT를 더해도 됨
-   * ----------------------------- */
-  const CLOSED = {
-    slice1: { x: -27.5 * factor, y: -37.1 * factor },
-    slice2: { x: -38.4 * factor, y: -34.8 * factor },
-    slice3: { x: -38.9 * factor, y: -15.4 * factor },
+  const toggle = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    run(next ? 1 : 0);
   };
 
-  const OPEN = {
-    slice1: { x: -76.4 * factor, y: -109.0 * factor },
-    slice2: { x: -120.3 * factor, y: -89.0 * factor },
-    slice3: { x: -125.6 * factor, y: -33.7 * factor },
+  const close = () => {
+    if (!isOpen) return;
+    setIsOpen(false);
+    run(0);
   };
 
-  const slice1X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice1.x, OPEN.slice1.x] });
-  const slice1Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice1.y, OPEN.slice1.y] });
+  const CLOSED_BASE: Point = { x: -20, y: -20 };
+  const OPEN_BASE: Point = { x: -40, y: -38 };
 
-  const slice2X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice2.x, OPEN.slice2.x] });
-  const slice2Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice2.y, OPEN.slice2.y] });
+  // ---- Per-slice tuning zone (edit these values) ----
+  const CLOSED_RAW: Record<SliceKey, Point> = {
+    s1: { x: -42.5, y: -66.2 },
+    s2: { x: -68.6, y: -57.3 },
+    s3: { x: -68.7, y: -10.3 },
+  };
+  const CLOSED_SLICE_TWEAK: Record<SliceKey, Point> = {
+    s1: { x: 0, y: 0 },
+    s2: { x: 0, y: 0 },
+    s3: { x: 0, y: 0 },
+  };
+  const OPEN_SLICE_TWEAK: Record<SliceKey, Point> = {
+    s1: { x: 0, y: 0 },
+    s2: { x: -1, y: 4 },
+    s3: { x: -5, y: 0 },
+  };
+  // -----------------------------------------------
 
-  const slice3X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice3.x, OPEN.slice3.x] });
-  const slice3Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice3.y, OPEN.slice3.y] });
+  const CLOSED: Record<SliceKey, Point> = {
+    s1: addPoint(CLOSED_RAW.s1, CLOSED_SLICE_TWEAK.s1),
+    s2: addPoint(CLOSED_RAW.s2, CLOSED_SLICE_TWEAK.s2),
+    s3: addPoint(CLOSED_RAW.s3, CLOSED_SLICE_TWEAK.s3),
+  };
 
-  const halfScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.8] });
+  // OPEN은 CLOSED를 기준으로 "비례 확대"해서 계산한다.
+  const OPEN_PIVOT: Point = { x: -45, y: -35 };
+  const OPEN_SPREAD = 1.62;
+  const OPEN_GLOBAL_SHIFT: Point = { x: -44, y: -42 };
+  const spreadFromClosed = (p: Point): Point => ({
+    x: OPEN_PIVOT.x + (p.x - OPEN_PIVOT.x) * OPEN_SPREAD + OPEN_GLOBAL_SHIFT.x,
+    y: OPEN_PIVOT.y + (p.y - OPEN_PIVOT.y) * OPEN_SPREAD + OPEN_GLOBAL_SHIFT.y,
+  });
 
+  const OPEN: Record<SliceKey, Point> = {
+    s1: addPoint(spreadFromClosed(CLOSED.s1), OPEN_SLICE_TWEAK.s1),
+    s2: addPoint(spreadFromClosed(CLOSED.s2), OPEN_SLICE_TWEAK.s2),
+    s3: addPoint(spreadFromClosed(CLOSED.s3), OPEN_SLICE_TWEAK.s3),
+  };
+
+  const sx = (v: number) => v * factor;
+
+  const baseX = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED_BASE.x), sx(OPEN_BASE.x)] });
+  const baseY = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED_BASE.y), sx(OPEN_BASE.y)] });
+
+  const slice1X = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s1.x), sx(OPEN.s1.x)] });
+  const slice1Y = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s1.y), sx(OPEN.s1.y)] });
+  const slice2X = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s2.x), sx(OPEN.s2.x)] });
+  const slice2Y = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s2.y), sx(OPEN.s2.y)] });
+  const slice3X = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s3.x), sx(OPEN.s3.x)] });
+  const slice3Y = anim.interpolate({ inputRange: [0, 1], outputRange: [sx(CLOSED.s3.y), sx(OPEN.s3.y)] });
+
+  const SLICE_SCALE_CLOSED = 0.68;
+  const SLICE_SCALE_OPEN = 1.0;
+  const HALF_SCALE_OPEN = 1 + (SLICE_SCALE_OPEN - SLICE_SCALE_CLOSED) * 0.6;
+  const halfScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, HALF_SCALE_OPEN] });
   const sliceScale = anim.interpolate({
-    inputRange: [0, 1.7, 1.8],
-    outputRange: [0.6, 1.8, 1.7],
+    inputRange: [0, 0.8, 1],
+    outputRange: [SLICE_SCALE_CLOSED, 1.04, SLICE_SCALE_OPEN],
   });
 
   return {
-    toggle,
-    isOpen,
-    factor,
     anim,
-
-    // ✅ 추가로 내보내기 (베이스용)
+    factor,
+    isOpen,
+    toggle,
+    close,
     baseX,
     baseY,
-
     halfScale,
     sliceScale,
     slice1X,

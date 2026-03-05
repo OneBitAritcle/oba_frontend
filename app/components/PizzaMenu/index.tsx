@@ -1,4 +1,3 @@
-// app/components/PizzaMenu/index.tsx
 import { View, Pressable, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import usePizzaAnimation from "./usePizzaAnimation";
@@ -7,6 +6,7 @@ import PizzaSlice from "./PizzaSlice";
 export default function PizzaMenu() {
   const {
     toggle,
+    close,
     halfScale,
     sliceScale,
     slice1X,
@@ -27,20 +27,14 @@ export default function PizzaMenu() {
 
   return (
     <View style={styles.fullScreenRoot} pointerEvents="box-none">
-      {/* 🌑 배경 딤 (Dimming) - 메뉴가 열릴 때 배경을 어둡게 함 */}
       <Animated.View
         style={[
           styles.dimOverlay,
-          {
-            opacity: anim ? anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.45],
-            }) : 0,
-          },
+          { opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.45] }) },
         ]}
         pointerEvents={isOpen ? "auto" : "none"}
       >
-        <Pressable style={{ flex: 1 }} onPress={toggle} />
+        <Pressable style={{ flex: 1 }} onPress={close} />
       </Animated.View>
 
       <View
@@ -53,70 +47,7 @@ export default function PizzaMenu() {
           },
         ]}
       >
-        {/* 슬라이스 1: 마이 */}
-        <PizzaSlice
-          source={require("../../../assets/navi/navi_slice_1.png")}
-          translateX={slice1X}
-          translateY={slice1Y}
-          scale={sliceScale}
-          onPressRoute="/my"
-          isOpen={isOpen}
-          onToggle={toggle}
-          factor={factor}
-          anim={anim}
-          label="마이"
-          sliceSize={60}
-          labelOffsetX={-23}
-          labelOffsetY={-50}
-          touchRotationOffset={-13}
-          touchOffsetX={15}
-          touchOffsetY={30}
-        />
-
-        {/* 슬라이스 2: 리포트 */}
-        <PizzaSlice
-          source={require("../../../assets/navi/navi_slice_2.png")}
-          translateX={slice2X}
-          translateY={slice2Y}
-          scale={sliceScale}
-          onPressRoute="/report"
-          isOpen={isOpen}
-          onToggle={toggle}
-          factor={factor}
-          anim={anim}
-          label="리포트"
-          sliceSize={62.5}
-          labelOffsetX={-55}
-          labelOffsetY={-25}
-          sliceRotation={0}
-          touchRotationOffset={-55}
-          touchOffsetX={30}
-          touchOffsetY={23}
-        />
-
-        {/* 슬라이스 3: 틀린문제 */}
-        <PizzaSlice
-          source={require("../../../assets/navi/navi_slice_3.png")}
-          translateX={slice3X}
-          translateY={slice3Y}
-          scale={sliceScale}
-          onPressRoute="/wrongArticles"
-          isOpen={isOpen}
-          onToggle={toggle}
-          factor={factor}
-          anim={anim}
-          label="틀린문제"
-          sliceSize={63}
-          labelOffsetX={-85}
-          labelOffsetY={0}
-          sliceRotation={0}
-          touchRotationOffset={-95}
-          touchOffsetX={30}
-          touchOffsetY={-5}
-        />
-
-        {/* 기본 피자 반쪽 - 토글 버튼 */}
-        <Pressable onPress={toggle}>
+        <Pressable onPress={toggle} style={styles.baseButton}>
           <Animated.Image
             source={require("../../../assets/navi/navi_half.png")}
             style={[
@@ -124,16 +55,91 @@ export default function PizzaMenu() {
               {
                 width: 70 * factor,
                 height: 70 * factor,
-                transform: [
-                  { scale: halfScale },
-                  { translateX: baseX },
-                  { translateY: baseY },
-                ],
+                opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1] }),
+                transform: [{ scale: halfScale }, { translateX: baseX }, { translateY: baseY }],
               },
             ]}
             resizeMode="contain"
           />
         </Pressable>
+
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: "absolute",
+            left: containerSize / 2,
+            top: containerSize / 2,
+            zIndex: 5,
+          }}
+        >
+          <PizzaSlice
+            source={require("../../../assets/navi/navi_slice_1.png")}
+            translateX={slice1X}
+            translateY={slice1Y}
+            scale={sliceScale}
+            onPressRoute="/my"
+            isOpen={isOpen}
+            onToggle={toggle}
+            factor={factor}
+            anim={anim}
+            label="마이"
+            sliceSize={55}
+            imageOffsetX={15}
+            imageOffsetY={30}
+            labelOffsetX={10}
+            labelOffsetY={-12}
+            sliceTouchScale={1.45}
+            touchRotationOffset={-12}
+            touchOffsetX={23}
+            touchOffsetY={50}
+          />
+
+          <PizzaSlice
+            source={require("../../../assets/navi/navi_slice_2.png")}
+            translateX={slice2X}
+            translateY={slice2Y}
+            scale={sliceScale}
+            onPressRoute="/report"
+            isOpen={isOpen}
+            onToggle={toggle}
+            factor={factor}
+            anim={anim}
+            label="리포트"
+            sliceSize={55}
+            imageOffsetX={30}
+            imageOffsetY={23}
+            labelOffsetX={-15}
+            labelOffsetY={3}
+            sliceTouchScale={1.45}
+            touchRotationOffset={-55}
+            touchOffsetX={50}
+            touchOffsetY={43}
+            sliceRotation={-0.5}
+          />
+
+          <PizzaSlice
+            source={require("../../../assets/navi/navi_slice_3.png")}
+            translateX={slice3X}
+            translateY={slice3Y}
+            scale={sliceScale}
+            onPressRoute="/wrongArticles"
+            isOpen={isOpen}
+            onToggle={toggle}
+            factor={factor}
+            anim={anim}
+            label="틀린문제"
+            sliceSize={56}
+            imageOffsetX={30}
+            imageOffsetY={-5}
+            labelOffsetX={-30}
+            labelOffsetY={-3}
+            sliceTouchScale={1.45}
+            touchRotationOffset={-100}
+            touchOffsetX={50}
+            touchOffsetY={-12}
+            sliceRotation={-0.3}
+          />
+        </View>
       </View>
     </View>
   );
@@ -142,7 +148,7 @@ export default function PizzaMenu() {
 const styles = StyleSheet.create({
   fullScreenRoot: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 99, // 네비게이터가 항상 위에 오도록
+    zIndex: 99,
   },
   dimOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -153,6 +159,9 @@ const styles = StyleSheet.create({
     right: 10,
     justifyContent: "center",
     alignItems: "center",
+  },
+  baseButton: {
+    zIndex: 1,
   },
   halfPizza: {
     width: 50,
