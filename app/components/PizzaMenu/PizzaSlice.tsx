@@ -51,6 +51,7 @@ export default function PizzaSlice({
   touchOffsetY = 0,
 }: Props) {
   const DEBUG_TOUCH = false;
+  const showSliceTouch = DEBUG_TOUCH && isOpen;
   const router = useRouter();
 
   const labelOpacity = anim
@@ -89,10 +90,7 @@ export default function PizzaSlice({
   const labelY = Animated.add(translateY, translateYWithOffset);
 
   const handlePress = () => {
-    if (!isOpen) {
-      onToggle();
-      return;
-    }
+    if (!isOpen) return;
     try {
       router.push(onPressRoute as any);
     } catch (e) {
@@ -126,13 +124,13 @@ export default function PizzaSlice({
           position: "absolute",
           zIndex: 20,
         }}
-        pointerEvents="box-none"
+        pointerEvents={isOpen ? "box-none" : "none"}
       >
         <Svg width={touchSize} height={touchSize} viewBox={`0 0 ${touchSize} ${touchSize}`} pointerEvents="none">
           <Path
             d={trianglePath}
-            fill={DEBUG_TOUCH ? "rgba(0,255,0,0.35)" : "transparent"}
-            stroke={DEBUG_TOUCH ? "green" : "transparent"}
+            fill={showSliceTouch ? "rgba(0,255,0,0.35)" : "transparent"}
+            stroke={showSliceTouch ? "green" : "transparent"}
             strokeWidth={1}
             onPress={handlePress}
           />
@@ -164,6 +162,7 @@ export default function PizzaSlice({
 
       {label && (
         <Animated.View
+          pointerEvents={isOpen ? "auto" : "none"}
           style={[
             styles.labelWrapper,
             {

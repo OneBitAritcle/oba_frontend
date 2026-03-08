@@ -4,6 +4,7 @@ import usePizzaAnimation from "./usePizzaAnimation";
 import PizzaSlice from "./PizzaSlice";
 
 export default function PizzaMenu() {
+  const DEBUG_TOUCH = false;
   const {
     toggle,
     close,
@@ -24,6 +25,7 @@ export default function PizzaMenu() {
 
   const insets = useSafeAreaInsets();
   const containerSize = 70 * factor;
+  const closedTouchSize = 76 * factor;
 
   return (
     <View style={styles.fullScreenRoot} pointerEvents="box-none">
@@ -47,7 +49,35 @@ export default function PizzaMenu() {
           },
         ]}
       >
-        <Pressable onPress={toggle} style={styles.baseButton}>
+        <Pressable
+          onPress={toggle}
+          style={[
+            styles.baseButton,
+            {
+              width: closedTouchSize,
+              height: closedTouchSize,
+              borderRadius: closedTouchSize / 2,
+              
+            },
+          ]}
+          hitSlop={4 * factor}
+        >
+          {DEBUG_TOUCH && !isOpen && (
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                width: closedTouchSize,
+                height: closedTouchSize,
+                borderRadius: closedTouchSize / 2,
+                backgroundColor: "rgba(0,255,0,0.22)",
+                borderWidth: 1,
+                borderColor: "green",
+                left: -2,
+                transform: [ { scale: halfScale }, { translateX: baseX }, { translateY: baseY }],
+              }}
+            />
+          )}
           <Animated.Image
             source={require("../../../assets/navi/navi_half.png")}
             style={[
@@ -161,6 +191,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   baseButton: {
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1,
   },
   halfPizza: {
