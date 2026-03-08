@@ -193,7 +193,10 @@ export default function ReportPage() {
 
       {/* 1. 커스텀 헤더 */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          style={styles.backButton}
+        >
           <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>

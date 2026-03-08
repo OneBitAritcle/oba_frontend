@@ -77,7 +77,10 @@ export default function WrongArticlesPage() {
   const renderHeader = () => (
     <View style={[styles.headerSection, { paddingTop: insets.top + 10 }]}>
       <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => router.push("/(tabs)")} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))}
+          style={styles.backButton}
+        >
           <Ionicons name="chevron-back" size={28} color="#1A1A1A" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>

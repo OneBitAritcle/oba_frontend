@@ -96,7 +96,11 @@ export default function ArticleDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "transparent" }}>
-      <TabBar activeTab={activeTab} setActiveTab={setActiveTab} goHome={() => router.push("/")} />
+      <TabBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        goHome={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      />
 
       {activeTab === "기사" && (
         <ArticleTab
