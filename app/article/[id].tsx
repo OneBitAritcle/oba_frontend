@@ -1,14 +1,15 @@
 // oba_fronted/app/article/[id].tsx
 import { useState, useEffect } from "react";
-import { View, Text, ActivityIndicator, Alert } from "react-native";
+import { View, ActivityIndicator, Alert } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TabBar from "./components/TabBar";
 import ArticleTab from "./components/ArticleTab";
 import SummaryTab from "./components/SummaryTab";
 import KeywordTab from "./components/KeywordTab";
 import QuizTab from "./components/QuizTab";
 import { apiClient } from "../../src/api/apiClient";
+import { completeArticleForToday } from "../../src/utils/weeklyArticleSlices";
+import { incrementTodayHistory } from "../../src/utils/prototypeCalendarHistory";
 
 interface Quiz {
   question: string;
@@ -26,7 +27,6 @@ interface Article {
 
 export default function ArticleDetail() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("기사");
   const [article, setArticle] = useState<Article | null>(null);
@@ -57,7 +57,19 @@ export default function ArticleDetail() {
       }
     };
     fetchArticle();
-  }, [id]);
+  }, [id, router]);
+
+  useEffect(() => {
+    if (!article || !article.quizzes?.length) return;
+    const gradedCount = isGraded.filter(Boolean).length;
+    if (gradedCount !== article.quizzes.length) return;
+
+    completeArticleForToday(article.articleId)
+      .then(() => incrementTodayHistory(1))
+      .catch((e) => {
+        console.warn("Failed to update weekly article slices:", e);
+      });
+  }, [article, isGraded]);
 
   if (loading) {
     return (
@@ -72,6 +84,7 @@ export default function ArticleDetail() {
   // 퀴즈 핸들러
   const handleSelect = (q: number, o: number) => setSelected(prev => ({ ...prev, [q]: o }));
   const handleGrade = (qIndex: number) => {
+    if (isGraded[qIndex]) return;
     setIsGraded(prev => {
       const updated = [...prev];
       updated[qIndex] = true;

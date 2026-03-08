@@ -15,6 +15,7 @@ import { Link } from "expo-router";
 import { apiClient } from "../../src/api/apiClient";
 import PizzaMenu from "../components/PizzaMenu";
 import HomeHeader from "../components/HomeHeader";
+import { getWeeklyArticleSlices } from "../../src/utils/weeklyArticleSlices";
 
 // ✅ [수정 1] ArticleSummary 인터페이스에 thumbnailUrl 추가
 interface ArticleSummary {
@@ -44,6 +45,7 @@ export default function Home() {
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [streak, setStreak] = useState(0);
+  const [daySliceCounts, setDaySliceCounts] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [loading, setLoading] = useState(true);
 
   // 날짜 포맷팅 함수 (예: 2026. 03. 03. (화))
@@ -68,6 +70,8 @@ export default function Home() {
         setArticles(articlesRes.data);
         setUserProfile(profileRes.data);
         setStreak(statsRes.data.consecutiveDays);
+        const weeklySlices = await getWeeklyArticleSlices();
+        setDaySliceCounts(weeklySlices.daySlices);
 
       } catch (err) {
         console.error("❌ [Home] 데이터 로딩 실패:", err);
@@ -96,6 +100,7 @@ export default function Home() {
           user={userProfile}
           streak={streak}
           date={getFormattedDate()}
+          daySliceCounts={daySliceCounts}
         />
       )}
 
@@ -184,11 +189,6 @@ export default function Home() {
                           {summaryText}
                         </Text>
 
-                        <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginTop: 10 }}>
-                          <Text style={{ fontSize: 12, color: "#8B95A1" }}>
-                            {item.servingDate}
-                          </Text>
-                        </View>
                       </View>
                     </Animated.View>
                   </Pressable>
