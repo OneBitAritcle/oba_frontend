@@ -20,11 +20,12 @@ import { apiClient } from "../../../src/api/apiClient";
 // 1. 데이터 타입 정의 (백엔드와 약속한 데이터 모양)
 // ---------------------------------------------------------
 type HistoryItem = {
-  article_id: number;
-  serving_date: string;
+  articleId: string;
   title: string;
-  category_name: string;
-  isWrong: boolean;
+  summary: string;
+  imageUrl: string;
+  category: string;
+  solvedAt: string;
 };
 
 export default function WrongArticlesPage() {
@@ -46,11 +47,11 @@ export default function WrongArticlesPage() {
   // ---------------------------------------------------------
   const fetchHistory = async () => {
     try {
-      const res = await apiClient.get("/my/wrong-answers");
+      const res = await apiClient.get("/api/my/wrong");
       setHistoryData(res.data);
 
-      const cats = Array.from(new Set(res.data.map((h: HistoryItem) => h.category_name)));
-      setCategories(["All", ...cats]);
+      const cats = Array.from(new Set(res.data.map((h: HistoryItem) => h.category)));
+      setCategories(["All", ...(cats as string[])]);
     } catch (error) {
       console.error("데이터 로딩 실패:", error);
       Alert.alert("오류", "데이터를 불러오지 못했습니다.");
@@ -74,6 +75,10 @@ export default function WrongArticlesPage() {
   // ---------------------------------------------------------
   const renderHeader = () => (
     <View style={styles.headerSection}>
+      <TouchableOpacity onPress={() => router.push("/(tabs)")} style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+        <Ionicons name="chevron-back" size={24} color="#333" />
+        <Text style={{ fontSize: 16, color: "#333", fontWeight: "600" }}>홈</Text>
+      </TouchableOpacity>
       <View style={styles.timelineHeader}>
         <Text style={styles.sectionTitle}>틀린 기사 다시보기</Text>
         <Text style={styles.sectionSubtitle}>최근 1년의 기사를 확인하세요</Text>
@@ -119,13 +124,13 @@ export default function WrongArticlesPage() {
       </View>
 
       <View style={styles.timelineRight}>
-        <Text style={styles.dateText}>{item.serving_date}</Text>
+        <Text style={styles.dateText}>{item.solvedAt}</Text>
         <TouchableOpacity
           style={styles.articleCard}
-          onPress={() => router.push(`/article/${item.article_id}`)}
+          onPress={() => router.push(`/article/${item.articleId}?retry=true`)}
         >
           <Text style={styles.articleTitle} numberOfLines={2}>{item.title}</Text>
-          <Text style={styles.articleCategory}>{item.category_name}</Text>
+          <Text style={styles.articleCategory}>{item.category}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -144,15 +149,14 @@ export default function WrongArticlesPage() {
       ) : (
         <FlatList
           data={historyData
-            .filter((h) => selectedCategory === "All" ? true : h.category_name === selectedCategory)
+            .filter((h) => selectedCategory === "All" ? true : h.category === selectedCategory)
             .sort((a, b) => {
-              const norm = (s: string) => s.replace(/\./g, "");
-              const ad = parseInt(norm(a.serving_date));
-              const bd = parseInt(norm(b.serving_date));
+              const ad = new Date(a.solvedAt).getTime();
+              const bd = new Date(b.solvedAt).getTime();
               return sortOrder === "newest" ? bd - ad : ad - bd;
             })}
           renderItem={renderItem}
-          keyExtractor={(item) => item.article_id.toString()}
+          keyExtractor={(item) => item.articleId}
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContentContainer}
           showsVerticalScrollIndicator={false}

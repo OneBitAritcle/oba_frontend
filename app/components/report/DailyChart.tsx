@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, LayoutChangeEvent } from "react-native";
 import Svg, { Path, Circle, Line } from "react-native-svg";
+import { apiClient } from "../../../src/api/apiClient";
 
 /**
  * 📍 API 명세: /BACKEND_API_SPEC.md - "3️⃣ 요일별 정답률 조회"
@@ -39,20 +40,11 @@ export default function DailyChart() {
     const fetchDailyStats = async () => {
       try {
         setLoading(true);
-        // ⏳ 현재는 Dummy 데이터로 테스트 (800ms 지연)
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        const mockData: DailyData[] = [
-          { day: "Mon", accuracy: 60 },
-          { day: "Tue", accuracy: 50 },
-          { day: "Wed", accuracy: 75 },
-          { day: "Thu", accuracy: 65 },
-          { day: "Fri", accuracy: 90 },
-          { day: "Sat", accuracy: 100 }, // 여기가 잘리는 문제
-          { day: "Sun", accuracy: 80 },
-        ];
-        setChartData(mockData);
+        const response = await apiClient.get("/api/report/daily-stats?days=7");
+        setChartData(response.data);
       } catch (err) {
-        console.error(err);
+        console.error("DailyChart 데이터 로드 실패:", err);
+        setChartData([]);
       } finally {
         setLoading(false);
       }

@@ -11,9 +11,10 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { apiClient } from "../../../src/api/apiClient";
+import { useAuth } from "../../../src/auth/AuthContext";
 
 // 컴포넌트 임포트
-// 경로가 맞는지 확인해주세요. (예: components 폴더 구조에 따라 수정 필요)
 import DailyChart from "../../components/report/DailyChart";
 import CategoryProgress from "../../components/report/CategoryProgress";
 
@@ -49,28 +50,14 @@ interface ReportData {
 }
 
 // 📌 [Dummy Data]
-const DUMMY_REPORT_DATA: ReportData = {
-  consecutiveDays: 12,
-  maxConsecutiveDays: 28,
-  perfectDays: 16,
-  solvedCount: 150,
-  totalCount: 200,
-  dailyStats: [
-    { day: "Mon", learningRate: 40, accuracy: 60 },
-    { day: "Tue", learningRate: 30, accuracy: 50 },
-    { day: "Wed", learningRate: 80, accuracy: 75 },
-    { day: "Thu", learningRate: 60, accuracy: 65 },
-    { day: "Fri", learningRate: 90, accuracy: 90 },
-    { day: "Sat", learningRate: 100, accuracy: 100 },
-    { day: "Sun", learningRate: 50, accuracy: 80 },
-  ],
-  categoryProgress: [
-    { category: "Tech", progress: 72, color: "#87CEEB" },
-    { category: "AI", progress: 80, color: "#D4845C" },
-    { category: "Health", progress: 70, color: "#D4C9AA" },
-    { category: "Social", progress: 94, color: "#A9A9A9" },
-    { category: "Pizza", progress: 60, color: "#7FCD7F" },
-  ],
+const DEFAULT_REPORT_DATA: ReportData = {
+  consecutiveDays: 0,
+  maxConsecutiveDays: 0,
+  perfectDays: 0,
+  solvedCount: 0,
+  totalCount: 0,
+  dailyStats: [],
+  categoryProgress: [],
 };
 
 // 📌 [Sub Components for Page Layout]
@@ -141,10 +128,17 @@ const ProgressBar = ({
 export default function ReportPage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isLoading: authLoading, isLoggedIn } = useAuth();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isLoggedIn) {
+      setReportData(DEFAULT_REPORT_DATA);
+      setLoading(false);
+      return;
+    }
     /**
      * 📌 리포트 데이터 로드 함수
      * 
@@ -178,21 +172,49 @@ export default function ReportPage() {
     const fetchReportData = async () => {
       try {
         setLoading(true);
-        // ⏳ 현재는 임시 지연으로 테스트
-        // await new Promise((resolve) => setTimeout(resolve, 500));
-        
-        // 📍 Dummy 데이터로 UI 테스트 (백엔드 준비 전)
-        setReportData(DUMMY_REPORT_DATA);
+        const data = { ...DEFAULT_REPORT_DATA };
+
+        const results = await Promise.allSettled([
+          apiClient.get("/api/report/stats"),
+          apiClient.get("/api/report/progress"),
+          apiClient.get("/api/report/daily-stats?days=7"),
+          apiClient.get("/api/report/category-progress"),
+        ]);
+
+        results.forEach((r, i) => {
+          if (r.status === "rejected") {
+            console.error(`[Report] API ${i} failed:`, r.reason?.response?.status, r.reason?.message);
+          }
+        });
+
+        if (results[0].status === "fulfilled") {
+          const d = results[0].value.data;
+          data.consecutiveDays = d.consecutiveDays ?? 0;
+          data.maxConsecutiveDays = d.maxConsecutiveDays ?? 0;
+          data.perfectDays = d.perfectDays ?? 0;
+        }
+        if (results[1].status === "fulfilled") {
+          const d = results[1].value.data;
+          data.solvedCount = d.solvedCount ?? 0;
+          data.totalCount = d.totalCount ?? 0;
+        }
+        if (results[2].status === "fulfilled") {
+          data.dailyStats = results[2].value.data ?? [];
+        }
+        if (results[3].status === "fulfilled") {
+          data.categoryProgress = results[3].value.data ?? [];
+        }
+
+        setReportData(data);
       } catch (error) {
-        console.error("❌ [Report] 데이터 로드 실패:", error);
-        // 에러 발생 시에도 Dummy 데이터로 진행하여 UI 확인 가능
-        setReportData(DUMMY_REPORT_DATA);
+        console.error("[Report] 데이터 로드 실패:", error);
+        setReportData(DEFAULT_REPORT_DATA);
       } finally {
         setLoading(false);
       }
     };
     fetchReportData();
-  }, []);
+  }, [authLoading]);
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import axios from "axios";
+import { apiClient } from "../../../src/api/apiClient";
 
 // =============================================================================
 // 📌 [Types & Interfaces]
@@ -26,6 +26,26 @@ interface ApiResponse {
   message?: string;
 }
 
+// 카테고리 짧은 이름 매핑 (차트 표시용)
+const SHORT_NAMES: Record<string, string> = {
+  "인공지능": "AI",
+  "생성형 AI": "생성AI",
+  "클라우드 컴퓨팅": "클라우드",
+  "퍼스널 컴퓨팅": "PC",
+  "데이터센터": "데이터센터",
+  "생산성 소프트웨어": "생산성SW",
+  "협업 소프트웨어": "협업SW",
+  "증강 현실": "AR",
+  "엔터프라이즈 애플리케이션": "엔터프라이즈",
+  "소프트웨어 개발": "SW개발",
+  "IT 리더십": "IT리더십",
+  "기술 업계 동향": "기술동향",
+  "IT 관리": "IT관리",
+  "안드로이드": "안드로이드",
+  "네트워크": "네트워크",
+  "미래기술": "미래기술",
+};
+
 // =============================================================================
 // 🚀 Component
 // =============================================================================
@@ -40,25 +60,9 @@ export default function CategoryProgress() {
   useEffect(() => {
     const fetchCategoryStats = async () => {
       try {
-        setLoading(true);        // ✅ 중요: user_id는 JWT 토큰에서 자동으로 추출됨 (Query Parameter 불필요)
-        //         // � 백엔드 연동 시 (주석 해제):
-        //    import { apiClient } from "../../../../src/api/apiClient";
-        //    const response = await apiClient.get("/api/report/category-progress");
-        //    setCategories(response.data);
-        
-        // --- [테스트용 더미 데이터 로직] ---
-        await new Promise((resolve) => setTimeout(resolve, 800)); 
-        const mockData: CategoryData[] = [
-          { category: "Tech", progress: 72, color: "#87CEEB" },
-          { category: "AI", progress: 80, color: "#D4845C" },
-          { category: "Health", progress: 70, color: "#D4C9AA" },
-          { category: "Social", progress: 94, color: "#A9A9A9" },
-          { category: "Pizza", progress: 60, color: "#7FCD7F" },
-        ];
-        setCategories(mockData);
-        // -------------------------------
-
-        // setCategories(response.data.data);
+        setLoading(true);
+        const response = await apiClient.get("/api/report/category-progress");
+        setCategories(response.data);
 
       } catch (err) {
         console.error("Failed to fetch category stats:", err);
@@ -101,7 +105,7 @@ export default function CategoryProgress() {
             
             {/* 1. 카테고리명 (고정 너비) */}
             <Text style={styles.categoryName} numberOfLines={1}>
-              {item.category}
+              {SHORT_NAMES[item.category] || item.category}
             </Text>
 
             {/* 2. 진행 바 트랙 */}
@@ -174,7 +178,7 @@ const styles = StyleSheet.create({
 
   // 1. 카테고리 이름
   categoryName: {
-    width: 60, // 이름 영역 고정 너비
+    width: 75, // 이름 영역 고정 너비
     fontSize: 13,
     fontWeight: "600",
     color: "#444",

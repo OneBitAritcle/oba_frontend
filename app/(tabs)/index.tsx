@@ -1,5 +1,4 @@
-// oba_fronted/app/(tabs)/index.tsx
-// oba_fronted/app/(tabs)/index.tsx
+// oba_frontend/app/(tabs)/index.tsx
 
 import { useRef, useState, useEffect } from "react";
 import {
@@ -15,90 +14,117 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 import { apiClient } from "../../src/api/apiClient";
 import PizzaMenu from "../components/PizzaMenu";
+import HomeHeader from "../components/HomeHeader";
 
-// ✅ [수정 1] MongoDB ID는 문자열이므로 string으로 변경
 interface ArticleSummary {
-  articleId: string; 
-  article_id?: string;
+  articleId: string;
   title: string;
   summaryBullets?: string[];
-  summary_bullets?: string[];
+  thumbnailUrl?: string;
   servingDate?: string;
-  serving_date?: string;
+}
+
+interface UserProfile {
+  nickname: string;
+  profileImage: string;
+}
+
+// Extract first image URL from article detail content
+function extractImageFromContent(content: string[]): string | null {
+  if (!content) return null;
+  for (const line of content) {
+    if (line.startsWith("<img>")) {
+      return line.replace("<img>", "");
+    }
+  }
+  return null;
 }
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  
-  const scrollX = useRef(new Animated.Value(0)).current; 
-  
-  const CARD_WIDTH = width * 0.65;
-  const CARD_HEIGHT = Math.min(height * 0.5, 500);
+
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  const CARD_WIDTH = width * 0.75;
+  const CARD_HEIGHT = Math.min(height * 0.55, 550);
   const SIDE_SPACING = (width - CARD_WIDTH) / 2;
-  const SNAP_INTERVAL = CARD_WIDTH + 10;
+  const SNAP_INTERVAL = CARD_WIDTH + 12;
 
   const [articles, setArticles] = useState<ArticleSummary[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [daySliceCounts, setDaySliceCounts] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [loading, setLoading] = useState(true);
 
+  const getFormattedDate = () => {
+    const now = new Date();
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    return `${now.getFullYear()}. ${String(now.getMonth() + 1).padStart(2, "0")}. ${String(now.getDate()).padStart(2, "0")}. (${days[now.getDay()]})`;
+  };
+
   useEffect(() => {
-    const fetchArticles = async () => {
+    const fetchData = async () => {
       try {
-        console.log("📡 [Home] 기사 데이터 요청 시작...");
-        
-        // 1. 최신 기사 가져오기
-        const res = await apiClient.get<ArticleSummary[]>("/articles/latest?limit=10");
-        
-        // ✅ [디버깅] 서버에서 실제로 어떤 데이터가 오는지 로그로 확인
-        console.log("📥 [Home] 서버 응답 데이터:", JSON.stringify(res.data, null, 2));
+        setLoading(true);
 
-        const data = res.data;
+        // Fetch articles
+        try {
+          const articlesRes = await apiClient.get("/api/articles/latest?limit=10");
+          const data = articlesRes.data;
+          let articleList: ArticleSummary[] = Array.isArray(data) ? data : [];
 
-        // 2. 오늘 날짜 계산
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const today = `${year}-${month}-${day}`; 
+          // Filter today's articles and limit to 5
+          const today = new Date().toISOString().split("T")[0];
+          const todayArticles = articleList.filter(
+            (a) => a.servingDate === today
+          );
+          articleList = todayArticles.length > 0 ? todayArticles.slice(0, 5) : articleList.slice(0, 5);
 
-        console.log(`📅 [Home] 앱 기준 오늘 날짜: ${today}`);
+          // Fetch thumbnails from article details
+          const articlesWithImages = await Promise.all(
+            articleList.map(async (article) => {
+              try {
+                const detailRes = await apiClient.get(`/api/articles/${article.articleId}`);
+                const imageUrl = extractImageFromContent(detailRes.data.content);
+                return { ...article, thumbnailUrl: imageUrl || undefined };
+              } catch {
+                return article;
+              }
+            })
+          );
 
-        // ✅ [수정 2] 필터링 로직 완화 (일단 모든 데이터를 보여주도록 수정)
-        // 만약 서버 데이터가 없으면 빈 배열
-        if (!data || !Array.isArray(data)) {
-            console.log("⚠️ 데이터가 배열이 아닙니다.");
-            setArticles([]);
-            return;
+          setArticles(articlesWithImages);
+        } catch (e) {
+          console.error("Articles fetch failed:", e);
+          setArticles([]);
         }
 
-        const mappedArticles = data.map(item => ({
-          // 컴포넌트에서 쓰기 편하게 통일
-          // 서버 응답이 articleId 인지 _id 인지 확인 필요 (Mongo는 보통 _id)
-          articleId: item.articleId || item.article_id || (item as any)._id || "", 
-          title: item.title,
-          summaryBullets: item.summaryBullets || item.summary_bullets || [],
-          servingDate: item.servingDate || item.serving_date || "",
-        }));
-
-        // 🚀 필터링을 잠시 끄고 데이터를 전부 보여줍니다.
-        // 나중에 servingDate 형식이 확인되면 다시 필터를 켜세요.
-        console.log(`✅ [Home] 표시할 기사 개수: ${mappedArticles.length}개`);
-        setArticles(mappedArticles);
-
-      } catch (err) {
-        console.error("❌ [Home] 기사 로딩 실패:", err);
-        setArticles([]);
+        // Fetch user profile
+        try {
+          const profileRes = await apiClient.get("/api/users/me");
+          setUserProfile({
+            nickname: profileRes.data.displayName || profileRes.data.name || "한입기사님",
+            profileImage: profileRes.data.picture || "",
+          });
+          setStreak(profileRes.data.consecutiveDays || 0);
+          const weeklyLog = profileRes.data.weeklyLog || [];
+          setDaySliceCounts(weeklyLog.map((v: boolean) => (v ? 1 : 0)));
+        } catch (e) {
+          console.error("Profile fetch failed:", e);
+          setUserProfile({ nickname: "한입기사님", profileImage: "" });
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchArticles();
+    fetchData();
   }, []);
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F5FAFF" }}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10, color: "#666" }}>따끈한 피자 기사를 굽는 중... 🍕</Text>
       </View>
@@ -106,17 +132,26 @@ export default function Home() {
   }
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top + 20 }}>
-      <View style={{ marginTop: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "700", marginLeft: 24, marginBottom: 16, color: "#191F28" }}>
+    <View style={{ flex: 1, paddingTop: insets.top + 10, backgroundColor: "#F5FAFF" }}>
+      {userProfile && (
+        <HomeHeader
+          user={userProfile}
+          streak={streak}
+          date={getFormattedDate()}
+          daySliceCounts={daySliceCounts}
+        />
+      )}
+
+      <View style={{ marginTop: 0 }}>
+        <Text style={{ fontSize: 20, fontWeight: "800", marginLeft: 24, marginBottom: 16, color: "#191F28" }}>
           오늘의 기사
         </Text>
-        
+
         {articles.length === 0 ? (
           <View style={{ alignItems: "center", marginTop: 50, paddingHorizontal: 40 }}>
-            <Image 
-              source={require("../../assets/knight/hand.png")} 
-              style={{ width: 100, height: 100, marginBottom: 10, opacity: 0.5 }} 
+            <Image
+              source={require("../../assets/knight/hand.png")}
+              style={{ width: 100, height: 100, marginBottom: 10, opacity: 0.5 }}
               resizeMode="contain"
             />
             <Text style={{ color: "#999", fontSize: 16, marginBottom: 5 }}>아직 도착한 기사가 없어요.</Text>
@@ -126,9 +161,12 @@ export default function Home() {
           <Animated.ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={SNAP_INTERVAL}
+            snapToOffsets={articles.map((_, i) => i * SNAP_INTERVAL)}
+            snapToAlignment="start"
             decelerationRate="fast"
+            disableIntervalMomentum={true}
             scrollEventThrottle={16}
+            pagingEnabled={false}
             contentContainerStyle={{ paddingHorizontal: SIDE_SPACING }}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -141,14 +179,14 @@ export default function Home() {
                 i * SNAP_INTERVAL,
                 (i + 1) * SNAP_INTERVAL,
               ];
-              
+
               const scale = scrollX.interpolate({
                 inputRange,
-                outputRange: [0.9, 1, 0.9],
+                outputRange: [0.93, 1, 0.93],
                 extrapolate: "clamp",
               });
 
-              const summaryText = item.summaryBullets && item.summaryBullets.length > 0 
+              const summaryText = item.summaryBullets && item.summaryBullets.length > 0
                 ? item.summaryBullets.map(s => `• ${s}`).join("\n")
                 : "요약 내용이 없습니다.";
 
@@ -160,34 +198,34 @@ export default function Home() {
                         width: CARD_WIDTH,
                         height: CARD_HEIGHT,
                         backgroundColor: "#fff",
-                        borderRadius: 18,
-                        padding: 20,
-                        marginRight: 10,
+                        borderRadius: 24,
+                        padding: 0,
+                        marginRight: 12,
                         transform: [{ scale }],
                         shadowColor: "#000",
                         shadowOpacity: 0.1,
-                        shadowRadius: 10,
+                        shadowRadius: 12,
                         elevation: 5,
+                        overflow: "hidden",
                       }}
                     >
-                      <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 10 }} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      
-                      <View style={{ alignItems: "center", marginBottom: 15 }}>
+                      <View style={{ height: "45%", backgroundColor: "#F2F4F6" }}>
                         <Image
-                          source={require("../../assets/knight/deliever.png")}
-                          style={{ height: 120, width: 120, resizeMode: "contain" }}
+                          source={item.thumbnailUrl ? { uri: item.thumbnailUrl } : require("../../assets/knight/deliever.png")}
+                          style={{ width: "100%", height: "100%" }}
+                          resizeMode="cover"
                         />
                       </View>
-                      
-                      <Text style={{ fontSize: 13, lineHeight: 20, color: "#555", flex: 1 }} numberOfLines={5}>
-                        {summaryText}
-                      </Text>
-                      
-                      <Text style={{ fontSize: 12, color: "#999", textAlign: "right", marginTop: 10 }}>
-                        {item.servingDate}
-                      </Text>
+
+                      <View style={{ padding: 20, flex: 1 }}>
+                        <Text style={{ fontSize: 18, fontWeight: "800", color: "#191F28", marginBottom: 12 }} numberOfLines={2}>
+                          {item.title}
+                        </Text>
+
+                        <Text style={{ fontSize: 14, lineHeight: 22, color: "#4E5968", flex: 1 }} numberOfLines={4}>
+                          {summaryText}
+                        </Text>
+                      </View>
                     </Animated.View>
                   </Pressable>
                 </Link>

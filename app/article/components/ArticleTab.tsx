@@ -45,10 +45,21 @@ export default function ArticleTab({ article, onMoveToQuiz }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // 2. 데이터 안전장치 (백엔드 DTO 필드에 맞게 수정)
-  const categoryList = article.keywords || [];         // ← keywords 사용
-  const summaryText = article.summary || null;
+  // categoryName은 문자열 배열 (예: ["artificial-intelligence", "generative-ai"])
+  const categoryList = (article.categoryName || []).map((c: string) =>
+    c.replace(/-/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())
+  );
+  // summary: summaryBullets 배열을 문자열로 합침
+  const bullets = article.summaryBullets || article.summary_bullets || [];
+  const summaryText = Array.isArray(bullets) && bullets.length > 0
+    ? bullets.join("\n")
+    : (typeof article.summary === "string" ? article.summary : null);
   const subtitles = article.subtitle || [];
-  const contents = article.content || [];
+  // content가 1차원 문자열 배열이면 하나의 섹션으로 감싸기
+  const rawContent = article.content || [];
+  const contents = rawContent.length > 0 && !Array.isArray(rawContent[0])
+    ? [rawContent]
+    : rawContent;
 
   /**
    * 본문 아이템 렌더링 함수

@@ -51,7 +51,7 @@ export default function PizzaSlice({
   sliceTouchScale = 0.72,  // ← 터치 영역 기본 축소 (겹침 방지 핵심 👈)
 }: Props) {
 
-  const DEBUG_TOUCH = true; // ← 바로 여기! 딱 이곳이 정답
+  const DEBUG_TOUCH = false;
   const router = useRouter();
 
 

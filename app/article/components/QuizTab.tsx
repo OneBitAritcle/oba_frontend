@@ -5,8 +5,16 @@
 import { useState, useEffect, useRef } from "react"
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image, Modal, Animated, Easing } from "react-native"
 
-export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSelect, handleGrade, toggleOpen }) {
+export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSelect, handleGrade, toggleOpen, alreadySubmitted = false }) {
   const [showResult, setShowResult] = useState(false)
+
+  if (!quizList || quizList.length === 0) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingTop: 60 }}>
+        <Text style={{ fontSize: 16, color: "#999" }}>퀴즈를 준비 중이에요.</Text>
+      </View>
+    )
+  }
 
   const confettiAnims = useRef(
     Array.from({ length: 150 }, () => ({
@@ -54,7 +62,7 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
   const gradedCount = isGraded.filter((graded) => graded === true).length
   const correctCount = quizList.reduce((acc, quiz, index) => {
     const userAnswer = selected[index]
-    return userAnswer === quiz.answer ? acc + 1 : acc
+    return userAnswer === quiz.answerIndex ? acc + 1 : acc
   }, 0)
 
   const triggerConfetti = () => {
@@ -311,7 +319,7 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
   }
 
   useEffect(() => {
-    if (totalCount > 0 && gradedCount === totalCount) {
+    if (totalCount > 0 && gradedCount === totalCount && !alreadySubmitted) {
       setShowResult(true)
       if (correctCount === totalCount) {
         triggerPizzaConfetti()
@@ -348,11 +356,17 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 80 }}>
         <Text style={styles.header}>Quiz</Text>
 
+        {alreadySubmitted && (
+          <View style={{ backgroundColor: "#FFF8E1", padding: 12, borderRadius: 10, marginBottom: 16, alignItems: "center" }}>
+            <Text style={{ fontSize: 14, color: "#F57F17", fontWeight: "600" }}>이미 풀었던 퀴즈입니다. 오답노트에서 다시 풀 수 있어요.</Text>
+          </View>
+        )}
+
         {quizList.map((quiz, qIndex) => {
           const userAnswer = selected[qIndex]
           const graded = isGraded[qIndex]
           const open = isOpen[qIndex]
-          const isCorrect = userAnswer === quiz.answer
+          const isCorrect = userAnswer === quiz.answerIndex
 
           return (
             <View key={qIndex} style={styles.quizBlock}>
@@ -370,13 +384,13 @@ export default function QuizTab({ quizList, selected, isGraded, isOpen, handleSe
                       styles.option,
                       selectedOption && styles.selected,
                       graded &&
-                        oIndex === quiz.answer && {
+                        oIndex === quiz.answerIndex && {
                           backgroundColor: "#DFF5CC",
                           borderColor: "#8BC34A",
                         },
                       graded &&
                         selectedOption &&
-                        oIndex !== quiz.answer && {
+                        oIndex !== quiz.answerIndex && {
                           backgroundColor: "#FDDCDC",
                           borderColor: "#E57373",
                         },

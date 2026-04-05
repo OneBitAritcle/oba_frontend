@@ -39,7 +39,7 @@ export default function PizzaMenu() {
         translateX={slice1X}
         translateY={slice1Y}
         scale={sliceScale}
-        onPressRoute="/my"
+        onPressRoute="/(tabs)/my"
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
@@ -57,7 +57,7 @@ export default function PizzaMenu() {
         translateX={slice2X}
         translateY={slice2Y}
         scale={sliceScale}
-        onPressRoute="/report"
+        onPressRoute="/(tabs)/report"
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
@@ -76,7 +76,7 @@ export default function PizzaMenu() {
         translateX={slice3X}
         translateY={slice3Y}
         scale={sliceScale}
-        onPressRoute="/wrongArticles"
+        onPressRoute="/(tabs)/wrongArticles"
         isOpen={isOpen}
         onToggle={toggle}
         factor={factor}
