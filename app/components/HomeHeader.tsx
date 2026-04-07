@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Svg, { Defs, G, Path, RadialGradient, Stop, Circle } from "react-native-svg";
 
-const SHOW_CALENDAR_BUTTON = false;
+const SHOW_CALENDAR_BUTTON = true;
 
 interface HomeHeaderProps {
   user: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   card: {
-    backgroundColor: "#FFF9E6",
+    backgroundColor: "#F4F1FB",
     borderRadius: 32,
     padding: 24,
     ...Platform.select({
