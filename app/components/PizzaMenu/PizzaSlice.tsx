@@ -1,4 +1,3 @@
-// app/components/PizzaMenu/PizzaSlice.tsx
 import React from "react";
 import {
   Animated,
@@ -10,6 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { COLORS } from "../../../constants/theme";
 
 type Props = {
   source: ImageSourcePropType;
@@ -25,9 +25,13 @@ type Props = {
   labelOffsetX?: number;
   labelOffsetY?: number;
   labelIconSource?: ImageSourcePropType;
+  labelMinWidth?: number;
+  labelPaddingX?: number;
+  labelPaddingY?: number;
   sliceWidth: number;
   sliceHeight: number;
   sliceOpacity?: Animated.AnimatedInterpolation<number>;
+  debugTouch?: boolean;
 };
 
 export default function PizzaSlice({
@@ -44,22 +48,22 @@ export default function PizzaSlice({
   labelOffsetX,
   labelOffsetY,
   labelIconSource,
+  labelMinWidth,
+  labelPaddingX,
+  labelPaddingY,
   sliceWidth,
   sliceHeight,
   sliceOpacity,
+  debugTouch,
 }: Props) {
   const router = useRouter();
 
   const labelOpacity = anim
-    ? anim.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 0, 1] })
-    : 0;
-
-  const baseSlideX = anim
-    ? anim.interpolate({ inputRange: [0, 1], outputRange: [10 * factor, 0] })
-    : 0;
+    ? anim.interpolate({ inputRange: [0, 0.58, 1], outputRange: [0, 0, 1] })
+    : 1;
 
   const labelScale = anim
-    ? anim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] })
+    ? anim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] })
     : 1;
 
   const w = sliceWidth * factor;
@@ -68,21 +72,32 @@ export default function PizzaSlice({
   const finalOffsetX = (labelOffsetX ?? 0) * factor;
   const finalOffsetY = (labelOffsetY ?? 0) * factor;
 
-  const translateXWithOffset = anim
-    ? Animated.add(baseSlideX, new Animated.Value(finalOffsetX))
-    : new Animated.Value(finalOffsetX);
-  const translateYWithOffset = new Animated.Value(finalOffsetY);
+  // Keep label offset numeric to avoid creating Animated.Value on every render.
+  const labelTranslateX = anim
+    ? anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [finalOffsetX + 12 * factor, finalOffsetX],
+      })
+    : finalOffsetX;
+
+  const bubbleMinWidth = (labelMinWidth ?? 68) * factor;
+  const bubblePaddingX = (labelPaddingX ?? 12) * factor;
+  const bubblePaddingY = (labelPaddingY ?? 5) * factor;
+
+  const openHitSlop = Math.max(8, Math.round(10 * factor));
 
   const handlePress = () => {
     if (!isOpen) {
       onToggle();
       return;
     }
+
     try {
-      router.push(onPressRoute as any);
+      router.push(onPressRoute as never);
     } catch (e) {
       console.warn("Navigation error:", e);
     }
+
     onToggle();
   };
 
@@ -97,7 +112,9 @@ export default function PizzaSlice({
       ]}
       pointerEvents="box-none"
     >
-      <Pressable onPress={handlePress} hitSlop={0}
+      <Pressable
+        onPress={handlePress}
+        hitSlop={isOpen ? { top: openHitSlop, right: openHitSlop, bottom: openHitSlop, left: openHitSlop } : 0}
         style={{ width: w, height: h, justifyContent: "center", alignItems: "center" }}
       >
         <Animated.Image
@@ -107,28 +124,61 @@ export default function PizzaSlice({
           pointerEvents="none"
         />
 
+        {debugTouch && (
+          <>
+            <View
+              pointerEvents="none"
+              style={[
+                styles.debugTouchBox,
+                {
+                  borderRadius: 6 * factor,
+                },
+              ]}
+            />
+            {isOpen && (
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.debugTouchHitSlop,
+                  {
+                    top: -openHitSlop,
+                    left: -openHitSlop,
+                    right: -openHitSlop,
+                    bottom: -openHitSlop,
+                    borderRadius: 8 * factor,
+                  },
+                ]}
+              />
+            )}
+          </>
+        )}
+
         {label && (
           <Animated.View
             style={[
               styles.labelWrapper,
               {
                 opacity: labelOpacity,
-                transform: [
-                  { translateX: translateXWithOffset },
-                  { translateY: translateYWithOffset },
-                  { scale: labelScale },
-                ],
+                transform: [{ translateX: labelTranslateX }, { translateY: finalOffsetY }, { scale: labelScale }],
               },
             ]}
           >
-            <View style={[styles.labelBubble, {
-              borderRadius: 4 * factor,
-              paddingHorizontal: 6 * factor,
-              paddingVertical: 2 * factor,
-            }]}>
+            <View
+              style={[
+                styles.labelBubble,
+                {
+                  borderRadius: 8 * factor,
+                  minWidth: bubbleMinWidth,
+                  maxWidth: 120 * factor,
+                  paddingHorizontal: bubblePaddingX,
+                  paddingVertical: bubblePaddingY,
+                },
+              ]}
+            >
               <View style={styles.labelInner}>
                 {labelIconSource && (
-                  <Image source={labelIconSource}
+                  <Image
+                    source={labelIconSource}
                     style={{ width: 10 * factor, height: 10 * factor, marginRight: 4 * factor }}
                   />
                 )}
@@ -148,7 +198,7 @@ const styles = StyleSheet.create({
   sliceContainer: { position: "absolute" },
   labelWrapper: { position: "absolute" },
   labelBubble: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: "rgba(255, 255, 255, 0.96)",
     shadowColor: "#8B6F47",
     shadowOpacity: 0.15,
     shadowOffset: { width: 0, height: 2 },
@@ -156,8 +206,31 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255, 140, 66, 0.25)",
+    borderColor: COLORS.glassBorder,
   },
-  labelInner: { flexDirection: "row", alignItems: "center" },
-  labelText: { color: "#2D2016", fontWeight: "700" },
+  labelInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  labelText: {
+    color: "#2D2016",
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: -0.2,
+  },
+  debugTouchBox: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 255, 0, 0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 128, 0, 0.9)",
+  },
+  debugTouchHitSlop: {
+    position: "absolute",
+    backgroundColor: "rgba(60, 200, 120, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(40, 160, 80, 0.9)",
+  },
 });
+
+

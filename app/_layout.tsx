@@ -1,44 +1,45 @@
-import { DefaultTheme, ThemeProvider } from "@react-navigation/native"
-import { Stack, useRouter, useSegments } from "expo-router"
-import { StatusBar } from "expo-status-bar"
-import { useEffect } from "react"
-import { View, ActivityIndicator } from "react-native"
-import "react-native-reanimated"
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context"
-import AppBackground from "./components/AppBackground"
-import { AuthProvider, useAuth } from "../src/auth/AuthContext"
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import "react-native-reanimated";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import AppBackground from "./components/AppBackground";
+import { AuthProvider, useAuth } from "../src/auth/AuthContext";
+import { COLORS } from "../constants/theme";
 
 const MyTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "#FFF8F0",
+    background: COLORS.bgPrimary,
   },
-}
+};
 
 function RootNavigator() {
-  const { isLoggedIn, isLoading } = useAuth()
-  const segments = useSegments()
-  const router = useRouter()
+  const { isLoggedIn, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return
+    if (isLoading) return;
 
-    const inAuthGroup = segments[0] === "(auth)"
+    const inAuthGroup = segments[0] === "(auth)";
 
     if (!isLoggedIn && !inAuthGroup) {
-      router.replace("/(auth)/login")
+      router.replace("/(auth)/login");
     } else if (isLoggedIn && inAuthGroup) {
-      router.replace("/(tabs)")
+      router.replace("/(tabs)");
     }
-  }, [isLoggedIn, isLoading, segments])
+  }, [isLoggedIn, isLoading, segments, router]);
 
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#FF8C42" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
-    )
+    );
   }
 
   return (
@@ -47,7 +48,7 @@ function RootNavigator() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="article/[id]" options={{ headerShown: false }} />
     </Stack>
-  )
+  );
 }
 
 export default function RootLayout() {
@@ -55,10 +56,10 @@ export default function RootLayout() {
     <AuthProvider>
       <SafeAreaProvider>
         <ThemeProvider value={MyTheme}>
-          <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF8F0" }}>
-            <View style={{ flex: 1, backgroundColor: "#FFF8F0" }}>
+          <SafeAreaView edges={["left", "right", "bottom"]} style={{ flex: 1, backgroundColor: COLORS.bgPrimary }}>
+            <View style={{ flex: 1, backgroundColor: COLORS.bgPrimary }}>
               <AppBackground />
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, backgroundColor: COLORS.bgPrimary }}>
                 <RootNavigator />
               </View>
             </View>
@@ -67,5 +68,6 @@ export default function RootLayout() {
         </ThemeProvider>
       </SafeAreaProvider>
     </AuthProvider>
-  )
+  );
 }
+

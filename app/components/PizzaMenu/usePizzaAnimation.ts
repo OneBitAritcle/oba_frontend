@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import { Animated, useWindowDimensions } from "react-native";
 
+type SliceKey = "s1" | "s2" | "s3";
+type Point = { x: number; y: number };
+
 export default function usePizzaAnimation() {
   const anim = useRef(new Animated.Value(0)).current;
   const { width, height } = useWindowDimensions();
@@ -18,64 +21,161 @@ export default function usePizzaAnimation() {
     }).start();
   };
 
-  // ═══ GEOMETRY (all in base units × factor) ═══
-  //
-  // Container: 70×70.
-  // Slice wrapper: absoluteFill → same as container (0,0)-(70,70).
-  // sliceContainer: position:absolute at (0,0) of wrapper = container (0,0).
-  // After translate(tx,ty): slice top-left at (tx, ty).
-  //
-  // Half-pizza: 581×628 original, contain in 70×70 → renders 64.76×70.
-  //   Content offset in box: ((70-64.76)/2, 0) = (2.62, 0).
-  //   Transform translateX=-5 shifts image box left.
-  //   Content top-left: (-5 + 2.62, 0) = (-2.38, 0).
-  //   Pizza center (555/581, 335/628) → rendered (61.86, 37.34) from content top-left.
-  //   Pizza center in container: (-2.38 + 61.86, 37.34) = (59.48, 37.34).
-  //
-  // Slice tip = (tx + tipX, ty + tipY) must equal pizza center.
-  //   tx = 59.48 - tipX,  ty = 37.34 - tipY
-  //
-  // Revised pizza center: ~(340, 360) in 581×628 original
-  //   → rendered (37.9, 40.1) in 64.76×70 image
-  //   → container coords: (-5 + 2.62 + 37.9, 40.1) = (35.52, 40.13)
-  //
-  // Slice 1 (24×33): tip at (15/235, 316/326) → (1.53, 31.98) → tx=34.0, ty=8.1
-  // Slice 2 (33×29): tip at (160/324, 275/283) → (16.30, 28.18) → tx=19.2, ty=12.0
-  // Slice 3 (34×26): tip at (310/330, 248/257) → (31.94, 25.09) → tx=3.6, ty=15.0
+  // Base movement of half pizza image (closed -> open)
+  const CLOSED_BASE: Point = { x: -20, y: -20 };
+  const OPEN_BASE: Point = { x: -41, y: -39 };
 
-  const HALF_TX = -5 * factor;
-  const baseX = anim.interpolate({ inputRange: [0, 1], outputRange: [HALF_TX, HALF_TX] });
-  const baseY = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 0] });
+  // Closed state anchor points:
+  // - FAR: user-tuned old values (currently too far from center)
+  // - NEAR: pre-restore values (too close to center)
+  // Blend with near bias to get the requested middle point.
+  const CLOSED_RAW_FAR: Record<SliceKey, Point> = {
+    s1: { x: -42.5, y: -66.2 },
+    s2: { x: -68.6, y: -57.3 },
+    s3: { x: -68.7, y: -10.3 },
+  };
+
+  const CLOSED_RAW_NEAR: Record<SliceKey, Point> = {
+    s1: { x: 34.0, y: 8.1 },
+    s2: { x: 19.2, y: 12.0 },
+    s3: { x: 3.6, y: 15.0 },
+  };
+
+  // 0 = FAR, 1 = NEAR
+  // Requested: middle, but slightly closer to NEAR.
+  const CLOSED_NEAR_BIAS = 0.58;
+  const blend = (far: number, near: number) => far + (near - far) * CLOSED_NEAR_BIAS;
+
+  const CLOSED_RAW: Record<SliceKey, Point> = {
+    s1: {
+      x: blend(CLOSED_RAW_FAR.s1.x, CLOSED_RAW_NEAR.s1.x),
+      y: blend(CLOSED_RAW_FAR.s1.y, CLOSED_RAW_NEAR.s1.y),
+    },
+    s2: {
+      x: blend(CLOSED_RAW_FAR.s2.x, CLOSED_RAW_NEAR.s2.x),
+      y: blend(CLOSED_RAW_FAR.s2.y, CLOSED_RAW_NEAR.s2.y),
+    },
+    s3: {
+      x: blend(CLOSED_RAW_FAR.s3.x, CLOSED_RAW_NEAR.s3.x),
+      y: blend(CLOSED_RAW_FAR.s3.y, CLOSED_RAW_NEAR.s3.y),
+    },
+  };
+
+  const CLOSED_SLICE_TWEAK: Record<SliceKey, Point> = {
+    s1: { x: -6.9, y: 3.1 },
+    s2: { x: -4.9, y: 0.8 },
+    s3: { x: 3.4, y: 2.1 },
+  };
+
+  // Open spread: increase this if slices should fly out more
+  const OPEN_SPREAD_MULTIPLIER = 1.0;
+  const OPEN_GLOBAL_SHIFT: Point = { x: -15, y: -15 };
+
+  const OPEN_DELTA_RAW: Record<SliceKey, Point> = {
+    s1: { x: -56, y: -96 },
+    s2: { x: -95, y: -82 },
+    s3: { x: -100, y: -26 },
+  };
+
+  const OPEN_DELTA: Record<SliceKey, Point> = {
+    s1: {
+      x: OPEN_DELTA_RAW.s1.x * OPEN_SPREAD_MULTIPLIER,
+      y: OPEN_DELTA_RAW.s1.y * OPEN_SPREAD_MULTIPLIER,
+    },
+    s2: {
+      x: OPEN_DELTA_RAW.s2.x * OPEN_SPREAD_MULTIPLIER,
+      y: OPEN_DELTA_RAW.s2.y * OPEN_SPREAD_MULTIPLIER,
+    },
+    s3: {
+      x: OPEN_DELTA_RAW.s3.x * OPEN_SPREAD_MULTIPLIER,
+      y: OPEN_DELTA_RAW.s3.y * OPEN_SPREAD_MULTIPLIER,
+    },
+  };
+
+  const OPEN_SLICE_TWEAK: Record<SliceKey, Point> = {
+    s1: { x: 0, y: 0 },
+    s2: { x: -4, y: 2 },
+    s3: { x: -4, y: 1 },
+  };
+
+  const buildClosed = (k: SliceKey): Point => ({
+    x: (CLOSED_RAW[k].x + CLOSED_SLICE_TWEAK[k].x) * factor,
+    y: (CLOSED_RAW[k].y + CLOSED_SLICE_TWEAK[k].y) * factor,
+  });
 
   const CLOSED = {
-    slice1: { x: 34.0 * factor, y: 8.1 * factor },
-    slice2: { x: 19.2 * factor, y: 12.0 * factor },
-    slice3: { x: 3.6 * factor,  y: 15.0 * factor },
+    s1: buildClosed("s1"),
+    s2: buildClosed("s2"),
+    s3: buildClosed("s3"),
   };
 
   const OPEN = {
-    slice1: { x: CLOSED.slice1.x - 65 * factor, y: CLOSED.slice1.y - 80 * factor },
-    slice2: { x: CLOSED.slice2.x - 95 * factor, y: CLOSED.slice2.y - 55 * factor },
-    slice3: { x: CLOSED.slice3.x - 90 * factor, y: CLOSED.slice3.y - 15 * factor },
+    s1: {
+      x:
+        CLOSED.s1.x +
+        (OPEN_DELTA.s1.x + OPEN_SLICE_TWEAK.s1.x + OPEN_GLOBAL_SHIFT.x) * factor,
+      y:
+        CLOSED.s1.y +
+        (OPEN_DELTA.s1.y + OPEN_SLICE_TWEAK.s1.y + OPEN_GLOBAL_SHIFT.y) * factor,
+    },
+    s2: {
+      x:
+        CLOSED.s2.x +
+        (OPEN_DELTA.s2.x + OPEN_SLICE_TWEAK.s2.x + OPEN_GLOBAL_SHIFT.x) * factor,
+      y:
+        CLOSED.s2.y +
+        (OPEN_DELTA.s2.y + OPEN_SLICE_TWEAK.s2.y + OPEN_GLOBAL_SHIFT.y) * factor,
+    },
+    s3: {
+      x:
+        CLOSED.s3.x +
+        (OPEN_DELTA.s3.x + OPEN_SLICE_TWEAK.s3.x + OPEN_GLOBAL_SHIFT.x) * factor,
+      y:
+        CLOSED.s3.y +
+        (OPEN_DELTA.s3.y + OPEN_SLICE_TWEAK.s3.y + OPEN_GLOBAL_SHIFT.y) * factor,
+    },
   };
 
-  const slice1X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice1.x, OPEN.slice1.x] });
-  const slice1Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice1.y, OPEN.slice1.y] });
-  const slice2X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice2.x, OPEN.slice2.x] });
-  const slice2Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice2.y, OPEN.slice2.y] });
-  const slice3X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice3.x, OPEN.slice3.x] });
-  const slice3Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.slice3.y, OPEN.slice3.y] });
+  const baseX = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CLOSED_BASE.x * factor, OPEN_BASE.x * factor],
+  });
 
-  const halfScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] });
-  const sliceScale = anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.6, 1.5] });
+  const baseY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CLOSED_BASE.y * factor, OPEN_BASE.y * factor],
+  });
+
+  const slice1X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s1.x, OPEN.s1.x] });
+  const slice1Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s1.y, OPEN.s1.y] });
+  const slice2X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s2.x, OPEN.s2.x] });
+  const slice2Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s2.y, OPEN.s2.y] });
+  const slice3X = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s3.x, OPEN.s3.x] });
+  const slice3Y = anim.interpolate({ inputRange: [0, 1], outputRange: [CLOSED.s3.y, OPEN.s3.y] });
+
+  const halfScale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.72] });
+  const sliceScale = anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.9, 1.79] });
   const sliceOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 1] });
 
   return {
-    toggle, isOpen, factor, anim,
-    baseX, baseY, halfScale,
-    sliceScale, sliceOpacity,
-    slice1X, slice1Y,
-    slice2X, slice2Y,
-    slice3X, slice3Y,
+    toggle,
+    isOpen,
+    factor,
+    anim,
+    baseX,
+    baseY,
+    halfScale,
+    sliceScale,
+    sliceOpacity,
+    slice1X,
+    slice1Y,
+    slice2X,
+    slice2Y,
+    slice3X,
+    slice3Y,
   };
 }
+
+
+
+

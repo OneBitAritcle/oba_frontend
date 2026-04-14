@@ -1,11 +1,37 @@
-import { View, StyleSheet } from "react-native";
+import { View, Image, StyleSheet, useWindowDimensions } from "react-native";
 import { COLORS } from "../../constants/theme";
 
 export default function AppBackground() {
+  const { width, height } = useWindowDimensions();
+
+  const pos = ({ top, left, right, bottom }: { top?: number; left?: number; right?: number; bottom?: number }) => ({
+    top: top !== undefined ? (top / 844) * height : undefined,
+    left: left !== undefined ? (left / 390) * width : undefined,
+    right: right !== undefined ? (right / 390) * width : undefined,
+    bottom: bottom !== undefined ? (bottom / 844) * height : undefined,
+  });
+
   return (
     <View style={[StyleSheet.absoluteFill, styles.container]} pointerEvents="none">
-      <View style={styles.glowTopRight} />
-      <View style={styles.glowBottomLeft} />
+      <Image source={require("../../assets/pizza/pep.png")} style={[styles.decoration, pos({ top: 100, left: 140 })]} />
+      <Image
+        source={require("../../assets/food/burger.png")}
+        style={[styles.decoration, pos({ top: 180, right: 90 }), { transform: [{ rotate: "-12deg" }] }]}
+      />
+      <Image
+        source={require("../../assets/food/potato.png")}
+        style={[styles.decoration, pos({ top: 330, left: 60 }), { transform: [{ rotate: "-12deg" }] }]}
+      />
+      <Image
+        source={require("../../assets/pizza/mar.png")}
+        style={[styles.decoration, pos({ top: 460, right: 60 }), { transform: [{ rotate: "12deg" }] }]}
+      />
+      <Image
+        source={require("../../assets/food/ckin.png")}
+        style={[styles.decoration, pos({ top: 620, left: 180 }), { transform: [{ rotate: "16deg" }] }]}
+      />
+      <Image source={require("../../assets/food/chic.png")} style={[styles.decoration, pos({ top: 720, right: 50 })]} />
+      <Image source={require("../../assets/pizza/hwaa.png")} style={[styles.decoration, pos({ left: 100, bottom: 150 })]} />
     </View>
   );
 }
@@ -15,24 +41,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     backgroundColor: COLORS.bgPrimary,
   },
-  glowTopRight: {
+  decoration: {
     position: "absolute",
-    top: -150,
-    right: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: COLORS.secondary,
-    opacity: 0.08,
-  },
-  glowBottomLeft: {
-    position: "absolute",
-    bottom: -80,
-    left: -120,
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: COLORS.primary,
-    opacity: 0.05,
+    width: 60,
+    height: 60,
+    opacity: 0.15,
   },
 });

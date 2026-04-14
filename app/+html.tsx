@@ -9,15 +9,19 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           html, body, #root {
-            background-color: #FFF8F0 !important;
+            background-color: #F5FAFF !important;
             overflow: hidden;
           }
           body {
             overscroll-behavior: none;
           }
-        `}} />
+        `,
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

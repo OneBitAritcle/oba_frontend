@@ -8,6 +8,7 @@ export default function TabsLayout() {
       <Stack.Screen name="my/index" />
       <Stack.Screen name="report/index" />
       <Stack.Screen name="wrongArticles/index" />
+      <Stack.Screen name="history/index" />
     </Stack>
   );
 }

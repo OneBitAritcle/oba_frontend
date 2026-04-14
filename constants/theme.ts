@@ -1,35 +1,35 @@
 export const COLORS = {
-  // Backgrounds (warm cream)
-  bgPrimary: "#FFF8F0",
-  bgSecondary: "#FFF1E6",
+  // Backgrounds (sky)
+  bgPrimary: "#F5FAFF",
+  bgSecondary: "#EEF5FF",
   bgCard: "#FFFFFF",
   bgCardElevated: "#FFFFFF",
 
-  // Primary (warm orange / pizza crust)
-  primary: "#FF8C42",
-  primaryLight: "#FFA96B",
-  primaryDark: "#E67A35",
-  primarySurface: "rgba(255, 140, 66, 0.10)",
+  // Primary (blue)
+  primary: "#4A8CFF",
+  primaryLight: "#6AA3FF",
+  primaryDark: "#2F6FDB",
+  primarySurface: "rgba(74, 140, 255, 0.12)",
 
-  // Secondary (golden cheese)
-  secondary: "#FFD54F",
-  secondaryLight: "#FFE082",
-  secondarySurface: "rgba(255, 213, 79, 0.12)",
+  // Secondary (sky)
+  secondary: "#87CEEB",
+  secondaryLight: "#A6DBF2",
+  secondarySurface: "rgba(135, 206, 235, 0.18)",
 
-  // Accent (tomato red)
+  // Accent
   accent: "#E74C3C",
   accentLight: "#FF6B6B",
   accentSurface: "rgba(231, 76, 60, 0.08)",
 
   // Neutrals
-  textPrimary: "#2D2016",
-  textSecondary: "#6B5B4E",
-  textTertiary: "#9E8E7E",
-  textPlaceholder: "#C4B5A5",
+  textPrimary: "#191F28",
+  textSecondary: "#4E5968",
+  textTertiary: "#8B95A1",
+  textPlaceholder: "#B0B8C1",
 
-  border: "rgba(180, 150, 120, 0.2)",
-  borderLight: "rgba(180, 150, 120, 0.1)",
-  divider: "rgba(180, 150, 120, 0.12)",
+  border: "rgba(74, 140, 255, 0.18)",
+  borderLight: "rgba(74, 140, 255, 0.1)",
+  divider: "rgba(74, 140, 255, 0.12)",
 
   // Semantic
   success: "#27AE60",
@@ -40,12 +40,12 @@ export const COLORS = {
   errorSurface: "rgba(231, 76, 60, 0.08)",
 
   // Overlay
-  overlay: "rgba(45, 32, 22, 0.6)",
-  overlayLight: "rgba(45, 32, 22, 0.2)",
+  overlay: "rgba(25, 31, 40, 0.55)",
+  overlayLight: "rgba(25, 31, 40, 0.2)",
 
-  // Glass effect (warm tint)
-  glass: "rgba(180, 150, 120, 0.06)",
-  glassBorder: "rgba(180, 150, 120, 0.15)",
+  // Glass effect (cool tint)
+  glass: "rgba(74, 140, 255, 0.06)",
+  glassBorder: "rgba(74, 140, 255, 0.16)",
 };
 
 export const SPACING = {
@@ -83,28 +83,28 @@ export const TYPO = {
 
 export const SHADOWS = {
   sm: {
-    shadowColor: "#8B6F47",
+    shadowColor: "#3E6FB8",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
   },
   md: {
-    shadowColor: "#8B6F47",
+    shadowColor: "#3E6FB8",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 4,
   },
   lg: {
-    shadowColor: "#8B6F47",
+    shadowColor: "#3E6FB8",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 8,
   },
   glow: {
-    shadowColor: "#FF8C42",
+    shadowColor: "#4A8CFF",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 20,

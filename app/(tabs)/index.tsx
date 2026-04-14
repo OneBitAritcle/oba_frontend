@@ -1,32 +1,84 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
-  View, Text, Image, Animated, useWindowDimensions, Pressable,
-  ActivityIndicator, StyleSheet,
+  View,
+  Text,
+  Image,
+  Animated,
+  useWindowDimensions,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Link } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiClient } from "../../src/api/apiClient";
 import PizzaMenu from "../components/PizzaMenu";
 import HomeHeader from "../components/HomeHeader";
 import { COLORS, SHADOWS, TYPO, SPACING, RADIUS } from "../../constants/theme";
+import {
+  buildDailySliceMap,
+  buildRecentWeekSliceCounts,
+  computeConsecutiveLearningDays,
+  extractApiData,
+  toDateKey,
+} from "../../src/utils/learningStats";
 
 interface ArticleSummary {
-  articleId: string; title: string; summaryBullets?: string[];
-  thumbnailUrl?: string; servingDate?: string;
+  articleId: string;
+  title: string;
+  summaryBullets?: string[];
+  thumbnailUrl?: string;
+  servingDate?: string;
 }
-interface UserProfile { nickname: string; profileImage: string; }
+
+interface UserProfile {
+  nickname: string;
+  profileImage: string;
+}
+
+const DAILY_SLICE_CACHE_KEY = "oba_daily_slice_map_cache";
 
 function extractImageFromContent(content: string[]): string | null {
   if (!content) return null;
-  for (const line of content) { if (line.startsWith("<img>")) return line.replace("<img>", ""); }
+  for (const line of content) {
+    if (line.startsWith("<img>")) return line.replace("<img>", "");
+  }
   return null;
+}
+
+async function fetchDailyStatsWithFallback(): Promise<any[]> {
+  const ranges = [180, 90, 30, 14, 7];
+  for (const days of ranges) {
+    try {
+      const res = await apiClient.get(`/api/report/daily-stats?days=${days}`);
+      const payload = extractApiData<any[]>(res.data);
+      if (Array.isArray(payload)) return payload;
+    } catch {
+      // try smaller range
+    }
+  }
+  return [];
+}
+
+function mergeSliceMaps(
+  cached: Record<string, number>,
+  fresh: Record<string, number>
+): Record<string, number> {
+  const out: Record<string, number> = { ...cached, ...fresh };
+  for (const key of Object.keys(out)) {
+    const a = Number(cached?.[key] ?? 0) || 0;
+    const b = Number(fresh?.[key] ?? 0) || 0;
+    out[key] = Math.max(a, b);
+  }
+  return out;
 }
 
 export default function Home() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const scrollX = useRef(new Animated.Value(0)).current;
+  const hasLoadedOnce = useRef(false);
 
   const CARD_WIDTH = width * 0.82;
   const CARD_HEIGHT = Math.min(height * 0.48, 460);
@@ -37,60 +89,164 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [streak, setStreak] = useState(0);
   const [daySliceCounts, setDaySliceCounts] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [daySliceMap, setDaySliceMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
-  const getFormattedDate = () => {
-    const now = new Date();
-    const days = ["일", "월", "화", "수", "목", "금", "토"];
-    return `${now.getFullYear()}. ${String(now.getMonth() + 1).padStart(2, "0")}. ${String(now.getDate()).padStart(2, "0")}. (${days[now.getDay()]})`;
-  };
+  const fetchData = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
+    try {
       try {
-        setLoading(true);
-        try {
-          const articlesRes = await apiClient.get("/api/articles/latest?limit=10");
-          const data = articlesRes.data;
-          let articleList: ArticleSummary[] = Array.isArray(data) ? data : [];
-          const today = new Date().toISOString().split("T")[0];
-          const todayArticles = articleList.filter((a) => a.servingDate === today);
-          articleList = todayArticles.length > 0 ? todayArticles.slice(0, 5) : articleList.slice(0, 5);
-          const articlesWithImages = await Promise.all(
-            articleList.map(async (article) => {
-              try {
-                const detailRes = await apiClient.get(`/api/articles/${article.articleId}`);
-                const imageUrl = extractImageFromContent(detailRes.data.content);
-                return { ...article, thumbnailUrl: imageUrl || undefined };
-              } catch { return article; }
-            })
-          );
-          setArticles(articlesWithImages);
-        } catch { setArticles([]); }
-        try {
-          const profileRes = await apiClient.get("/api/users/me");
-          const nickname = profileRes.data.nickname || profileRes.data.displayName || profileRes.data.name || "한입기사님";
-          const picture = profileRes.data.picture || "";
-          setUserProfile({ nickname, profileImage: picture });
-          setStreak(profileRes.data.consecutiveDays || 0);
-          const weeklyLog = profileRes.data.weeklyLog || [];
-          setDaySliceCounts(weeklyLog.map((v: boolean) => (v ? 1 : 0)));
-          try { await AsyncStorage.setItem("oba_cached_profile", JSON.stringify({ nickname, picture })); } catch {}
-        } catch {
-          try {
-            const cached = await AsyncStorage.getItem("oba_cached_profile");
-            if (cached) { const p = JSON.parse(cached); setUserProfile({ nickname: p.nickname, profileImage: p.picture || "" }); }
-            else { setUserProfile({ nickname: "한입기사님", profileImage: "" }); }
-          } catch { setUserProfile({ nickname: "한입기사님", profileImage: "" }); }
+        const articlesRes = await apiClient.get("/api/articles/latest?limit=10");
+        const rawData = extractApiData<any[]>(articlesRes.data);
+        const rawList = Array.isArray(rawData) ? rawData : [];
+
+        let articleList: ArticleSummary[] = rawList
+          .map((a: any) => ({
+            ...a,
+            articleId: String(a.articleId ?? a.id ?? a.article_id ?? ""),
+            servingDate: a.servingDate ?? a.serving_date ?? a.date,
+          }))
+          .filter((a: ArticleSummary) => Boolean(a.articleId));
+
+        const today = toDateKey(new Date());
+        const todayArticles = articleList.filter((a) => a.servingDate === today);
+        articleList = todayArticles.length > 0 ? todayArticles.slice(0, 5) : articleList.slice(0, 5);
+
+        const articlesWithImages = await Promise.all(
+          articleList.map(async (article) => {
+            try {
+              const detailRes = await apiClient.get(`/api/articles/${encodeURIComponent(article.articleId)}`);
+              const detailData = extractApiData<any>(detailRes.data);
+              const imageUrl = extractImageFromContent(detailData?.content || []);
+              return { ...article, thumbnailUrl: imageUrl || undefined };
+            } catch {
+              return article;
+            }
+          })
+        );
+
+        setArticles(articlesWithImages);
+      } catch {
+        setArticles([]);
+      }
+
+      let profileStreakFallback = 0;
+
+      try {
+        const profileRes = await apiClient.get("/api/users/me");
+        const profileData = extractApiData<any>(profileRes.data);
+
+        const nicknameRaw = profileData.nickname ?? profileData.displayName ?? profileData.name ?? "";
+        const nickname = String(nicknameRaw).trim() || "학습자님";
+
+        const localPicture = await AsyncStorage.getItem("oba_local_profile_picture");
+        const picture = localPicture || profileData.picture || "";
+
+        setUserProfile({ nickname, profileImage: picture });
+
+        const weeklySliceCounts =
+          profileData.weeklySliceCounts ??
+          profileData.daySliceCounts ??
+          profileData.weeklySolvedCounts;
+
+        const toCount = (value: unknown) => {
+          const n = Number(value);
+          if (Number.isFinite(n)) return Math.max(0, Math.min(5, Math.trunc(n)));
+          return value ? 1 : 0;
+        };
+
+        if (Array.isArray(weeklySliceCounts)) {
+          const normalized = weeklySliceCounts.slice(0, 7).map(toCount);
+          while (normalized.length < 7) normalized.push(0);
+          setDaySliceCounts(normalized);
+
+          const todayMonFirstIndex = (new Date().getDay() + 6) % 7;
+          let localStreak = 0;
+          for (let offset = 0; offset < 7; offset += 1) {
+            const idx = (todayMonFirstIndex - offset + 7) % 7;
+            if ((normalized[idx] ?? 0) > 0) {
+              localStreak += 1;
+            } else {
+              break;
+            }
+          }
+          profileStreakFallback = localStreak;
         }
-      } finally { setLoading(false); }
-    };
-    fetchData();
+
+        setStreak(profileStreakFallback);
+
+        await AsyncStorage.setItem(
+          "oba_cached_profile",
+          JSON.stringify({ nickname, picture })
+        );
+      } catch {
+        try {
+          const cached = await AsyncStorage.getItem("oba_cached_profile");
+          const localPicture = await AsyncStorage.getItem("oba_local_profile_picture");
+          if (cached) {
+            const p = JSON.parse(cached);
+            setUserProfile({
+              nickname: String(p?.nickname ?? "").trim() || "학습자님",
+              profileImage: localPicture || p.picture || "",
+            });
+          } else {
+            setUserProfile({ nickname: "학습자님", profileImage: "" });
+          }
+        } catch {
+          setUserProfile({ nickname: "학습자님", profileImage: "" });
+        }
+      }
+
+      try {
+        const dailyPayload = await fetchDailyStatsWithFallback();
+        const dailyStats = Array.isArray(dailyPayload) ? dailyPayload : [];
+        const freshMap = buildDailySliceMap(dailyStats);
+
+        let mergedMap: Record<string, number> = { ...freshMap };
+        try {
+          const cachedRaw = await AsyncStorage.getItem(DAILY_SLICE_CACHE_KEY);
+          const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
+          if (cachedMap && typeof cachedMap === "object") {
+            mergedMap = mergeSliceMaps(cachedMap, freshMap);
+          }
+          await AsyncStorage.setItem(DAILY_SLICE_CACHE_KEY, JSON.stringify(mergedMap));
+        } catch {}
+
+        setDaySliceMap(mergedMap);
+        setDaySliceCounts(buildRecentWeekSliceCounts(mergedMap));
+        setStreak(computeConsecutiveLearningDays(mergedMap));
+      } catch {
+        try {
+          const cachedRaw = await AsyncStorage.getItem(DAILY_SLICE_CACHE_KEY);
+          const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
+          if (cachedMap && typeof cachedMap === "object") {
+            setDaySliceMap(cachedMap);
+            setDaySliceCounts(buildRecentWeekSliceCounts(cachedMap));
+            setStreak(computeConsecutiveLearningDays(cachedMap));
+          } else {
+            setStreak(profileStreakFallback);
+          }
+        } catch {
+          setStreak(profileStreakFallback);
+        }
+      }
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const showLoading = !hasLoadedOnce.current;
+      fetchData(showLoading);
+      hasLoadedOnce.current = true;
+    }, [fetchData])
+  );
 
   if (loading) {
     return (
-      <View style={[s.loadingContainer, { paddingTop: insets.top }]}>
+      <View style={[s.loadingContainer, { paddingTop: insets.top }]}> 
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={s.loadingText}>기사를 불러오는 중...</Text>
       </View>
@@ -98,59 +254,100 @@ export default function Home() {
   }
 
   return (
-    <View style={[s.screen, { paddingTop: insets.top + 10 }]}>
+    <View style={[s.screen, { paddingTop: insets.top + 4 }]}> 
       {userProfile && (
-        <HomeHeader user={userProfile} streak={streak} date={getFormattedDate()} daySliceCounts={daySliceCounts} />
+        <HomeHeader
+          user={userProfile}
+          streak={streak}
+          daySliceCounts={daySliceCounts}
+          daySliceMap={daySliceMap}
+        />
       )}
 
       <View style={{ flex: 1 }}>
         <View style={s.sectionHeader}>
           <Text style={s.sectionTitle}>오늘의 기사</Text>
-          <Text style={s.sectionSub}>{articles.length}개의 기사를 확인하세요</Text>
+          <Text style={s.sectionSub}>{`${articles.length}개의 기사를 확인하세요`}</Text>
         </View>
 
         {articles.length === 0 ? (
           <View style={s.emptyContainer}>
             <Image source={require("../../assets/knight/hand.png")} style={s.emptyImage} resizeMode="contain" />
-            <Text style={s.emptyTitle}>아직 도착한 기사가 없어요.</Text>
-            <Text style={s.emptyDate}>({new Date().toLocaleDateString()} 기준)</Text>
+            <Text style={s.emptyTitle}>오늘 제공된 기사가 없어요</Text>
+            <Text style={s.emptyDate}>{`(${new Date().toLocaleDateString()} 기준)`}</Text>
           </View>
         ) : (
           <Animated.ScrollView
-            horizontal showsHorizontalScrollIndicator={false}
+            horizontal
+            showsHorizontalScrollIndicator={false}
             snapToOffsets={articles.map((_, i) => i * SNAP_INTERVAL)}
-            snapToAlignment="start" decelerationRate="fast" disableIntervalMomentum
+            snapToAlignment="start"
+            decelerationRate="fast"
+            disableIntervalMomentum
             scrollEventThrottle={16}
             contentContainerStyle={{ paddingHorizontal: SIDE_SPACING }}
-            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: true })}
+            onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+              useNativeDriver: true,
+            })}
           >
             {articles.map((item, i) => {
               const inputRange = [(i - 1) * SNAP_INTERVAL, i * SNAP_INTERVAL, (i + 1) * SNAP_INTERVAL];
-              const scale = scrollX.interpolate({ inputRange, outputRange: [0.93, 1, 0.93], extrapolate: "clamp" });
-              const opacity = scrollX.interpolate({ inputRange, outputRange: [0.5, 1, 0.5], extrapolate: "clamp" });
-              const summaryText = item.summaryBullets && item.summaryBullets.length > 0
-                ? item.summaryBullets.slice(0, 3).map(b => `• ${b}`).join("\n") : "";
+              const scale = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.93, 1, 0.93],
+                extrapolate: "clamp",
+              });
+              const opacity = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.5, 1, 0.5],
+                extrapolate: "clamp",
+              });
+              const summaryText =
+                item.summaryBullets && item.summaryBullets.length > 0
+                  ? item.summaryBullets
+                      .slice(0, 3)
+                      .map((b) => `• ${b}`)
+                      .join("\n")
+                  : "";
 
               return (
-                <Link key={i} href={`/article/${item.articleId}`} asChild>
+                <Link key={i} href={`/article/${encodeURIComponent(item.articleId)}`} asChild>
                   <Pressable>
-                    <Animated.View style={[s.card, {
-                      width: CARD_WIDTH, height: CARD_HEIGHT,
-                      transform: [{ scale }], opacity,
-                    }]}>
+                    <Animated.View
+                      style={[
+                        s.card,
+                        {
+                          width: CARD_WIDTH,
+                          height: CARD_HEIGHT,
+                          transform: [{ scale }],
+                          opacity,
+                        },
+                      ]}
+                    >
                       <View style={s.cardImageWrapper}>
                         <Image
-                          source={item.thumbnailUrl ? { uri: item.thumbnailUrl } : require("../../assets/knight/deliever.png")}
-                          style={s.cardImage} resizeMode="cover"
+                          source={
+                            item.thumbnailUrl
+                              ? { uri: item.thumbnailUrl }
+                              : require("../../assets/knight/deliever.png")
+                          }
+                          style={s.cardImage}
+                          resizeMode="cover"
                         />
                         <View style={s.cardBadge}>
-                          <Text style={s.cardBadgeText}>{i + 1} / {articles.length}</Text>
+                          <Text style={s.cardBadgeText}>
+                            {i + 1} / {articles.length}
+                          </Text>
                         </View>
                       </View>
                       <View style={s.cardContent}>
-                        <Text style={s.cardTitle} numberOfLines={2}>{item.title}</Text>
+                        <Text style={s.cardTitle} numberOfLines={2}>
+                          {item.title}
+                        </Text>
                         {summaryText ? (
-                          <Text style={s.cardSummary} numberOfLines={3}>{summaryText}</Text>
+                          <Text style={s.cardSummary} numberOfLines={3}>
+                            {summaryText}
+                          </Text>
                         ) : null}
                         <View style={s.cardFooter}>
                           <Text style={s.cardReadBtn}>읽기 →</Text>
@@ -185,16 +382,26 @@ const s = StyleSheet.create({
   emptyDate: { ...TYPO.caption, color: COLORS.textPlaceholder },
 
   card: {
-    backgroundColor: COLORS.bgCardElevated, borderRadius: RADIUS.xxl,
-    marginRight: 14, overflow: "hidden",
-    borderWidth: 1, borderColor: COLORS.glassBorder, ...SHADOWS.lg,
+    backgroundColor: COLORS.bgCardElevated,
+    borderRadius: RADIUS.xxl,
+    marginRight: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    ...SHADOWS.lg,
   },
   cardImageWrapper: { height: "45%", backgroundColor: COLORS.bgSecondary, position: "relative" },
   cardImage: { width: "100%", height: "100%" },
   cardBadge: {
-    position: "absolute", top: 12, right: 12,
-    backgroundColor: "rgba(255,255,255,0.85)", paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: RADIUS.pill, borderWidth: 1, borderColor: COLORS.glassBorder,
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "rgba(255,255,255,0.85)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
   },
   cardBadgeText: { ...TYPO.caption, color: COLORS.textPrimary, fontWeight: "600" },
   cardContent: { padding: SPACING.xl, flex: 1, justifyContent: "space-between" },
