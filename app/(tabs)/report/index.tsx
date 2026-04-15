@@ -73,19 +73,6 @@ const ProgressBar = ({ solvedCount }: { solvedCount: number; totalCount: number 
   );
 };
 
-function mergeSliceMaps(
-  cached: Record<string, number>,
-  fresh: Record<string, number>
-): Record<string, number> {
-  const out: Record<string, number> = { ...cached, ...fresh };
-  for (const key of Object.keys(out)) {
-    const a = Number(cached?.[key] ?? 0) || 0;
-    const b = Number(fresh?.[key] ?? 0) || 0;
-    out[key] = Math.max(a, b);
-  }
-  return out;
-}
-
 async function fetchDailyStatsWithFallback(): Promise<any[]> {
   const ranges = [180, 90, 30, 14, 7];
   for (const days of ranges) {
@@ -142,13 +129,8 @@ export default function ReportPage() {
         const dailyStats = Array.isArray(dailyPayload) ? dailyPayload : [];
         const freshMap = buildDailySliceMap(dailyStats);
 
-        let mergedMap: Record<string, number> = { ...freshMap };
+        const mergedMap: Record<string, number> = { ...freshMap };
         try {
-          const cachedRaw = await AsyncStorage.getItem(DAILY_SLICE_CACHE_KEY);
-          const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
-          if (cachedMap && typeof cachedMap === "object") {
-            mergedMap = mergeSliceMaps(cachedMap, freshMap);
-          }
           await AsyncStorage.setItem(DAILY_SLICE_CACHE_KEY, JSON.stringify(mergedMap));
         } catch {}
 
