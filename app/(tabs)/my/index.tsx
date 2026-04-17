@@ -368,11 +368,7 @@ export default function MyPage() {
           </View>
         )}
 
-        <View style={{ paddingHorizontal: SPACING.xxl, paddingTop: SPACING.xl }}>
-          <Text style={[TYPO.bodySm, { color: COLORS.textTertiary }]}>{"\uC571\uC758 \uC124\uC815\uACFC \uD53C\uB4DC\uBC31\uC744 \uAD00\uB9AC\uD560 \uC218 \uC788\uC5B4\uC694."}</Text>
-        </View>
-
-        <View style={s.section}>
+        <View style={[s.section, s.firstSection]}>
           <Text style={s.sectionTitle}>{"\uBB38\uC758\uD558\uAE30 \uBC0F \uD53C\uB4DC\uBC31"}</Text>
           <Text style={s.sectionDesc}>{"\uC11C\uBE44\uC2A4 \uAC1C\uC120\uC744 \uC704\uD574 \uC758\uACAC\uC744 \uBCF4\uB0B4\uC8FC\uC138\uC694."}</Text>
           <TouchableOpacity style={s.menuButton} activeOpacity={0.8} onPress={() => setFeedbackModalVisible(true)}>
@@ -439,7 +435,7 @@ export default function MyPage() {
               </TouchableOpacity>
             </View>
 
-            <Text style={s.feedbackDesc}>{"\uBD88\uD3B8\uD588\uB358 \uC810\uC774\uB098 \uAC1C\uC120 \uC544\uC774\uB514\uC5B4\uB97C \uC54C\uB824\uC8FC\uC138\uC694. \uC5EC\uB7EC\uBD84\uC758 \uC758\uACAC\uC774 \uC11C\uBE44\uC2A4 \uAC1C\uC120\uC5D0 \uD070 \uB3C4\uC6C0\uC774 \uB429\uB2C8\uB2E4."}</Text>
+            <Text style={s.feedbackDesc}>{"불편했던 점이나 개선 아이디어를 알려주세요.\n여러분의 의견이 서비스 개선에 큰 도움이 됩니다."}</Text>
 
             {isLoadingFeedback ? (
               <View style={s.loadingContainer}>
@@ -450,7 +446,7 @@ export default function MyPage() {
                 style={s.feedbackInput}
                 value={feedbackText}
                 onChangeText={setFeedbackText}
-                placeholder="\uB0B4\uC6A9\uC744 \uC790\uC720\uB86D\uAC8C \uC785\uB825\uD574\uC8FC\uC138\uC694.."
+                placeholder="이곳에 입력해주세요."
                 placeholderTextColor={COLORS.textPlaceholder}
                 multiline
                 numberOfLines={8}
@@ -553,6 +549,7 @@ const s = StyleSheet.create({
   resetPhotoText: { ...TYPO.caption, color: COLORS.primaryLight, marginLeft: 4, fontWeight: "700" },
 
   section: { marginTop: SPACING.xxxl, marginHorizontal: SPACING.xl },
+  firstSection: { marginTop: SPACING.lg },
   sectionTitle: { ...TYPO.h3, color: COLORS.textPrimary, marginBottom: 4 },
   sectionDesc: { ...TYPO.bodySm, color: COLORS.textTertiary, marginBottom: SPACING.lg },
 
@@ -683,4 +680,6 @@ const s = StyleSheet.create({
   },
   toastText: { color: COLORS.textPrimary, ...TYPO.label },
 });
+
+
 

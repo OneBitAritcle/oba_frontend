@@ -68,29 +68,31 @@ function firstFiniteNumber(...values: unknown[]): number | null {
 }
 
 export function countFromDailyStat(stat: DailyStatLike): number {
-  // Product rule: pizza slice count == solved problem count.
-  // 1) Prefer quiz/problem-based fields.
-  // 2) Fall back to article-based fields only when quiz fields are absent.
+  // Product rule: pizza slice count == solved quiz count.
+  // Use only explicit quiz-correct fields from daily-stats.
+  // IMPORTANT: do not read generic `solvedCount` here (it may represent other aggregates).
+  const attemptedQuizzes = firstFiniteNumber(
+    stat.attemptedQuizzes,
+    (stat as any).attemptedQuizCount,
+    (stat as any).attemptedCount,
+    (stat as any).solvedQuizAttemptedCount,
+  );
+
   const quizSolved = firstFiniteNumber(
     stat.correctQuizzes,
     (stat as any).correctQuizCount,
     (stat as any).correctCount,
-    stat.solvedCount,
     (stat as any).solvedQuizCount,
     (stat as any).quizSolvedCount,
     (stat as any).solvedProblemCount,
   );
 
-  if (quizSolved != null) return clampSliceCount(quizSolved);
+  if (quizSolved != null) {
+    const bounded = attemptedQuizzes != null ? Math.min(quizSolved, attemptedQuizzes) : quizSolved;
+    return clampSliceCount(bounded);
+  }
 
-  const articleSolved = firstFiniteNumber(
-    stat.solvedArticles,
-    (stat as any).solvedArticleCount,
-    stat.articleCount,
-    (stat as any).articleSolvedCount,
-  );
-
-  if (articleSolved != null) return clampSliceCount(articleSolved);
+  if (attemptedQuizzes != null) return clampSliceCount(attemptedQuizzes);
 
   return 0;
 }

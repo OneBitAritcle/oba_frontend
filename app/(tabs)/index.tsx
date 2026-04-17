@@ -30,6 +30,7 @@ interface ArticleSummary {
   summaryBullets?: string[];
   thumbnailUrl?: string;
   servingDate?: string;
+  isSolved?: boolean;
 }
 
 interface UserProfile {
@@ -59,19 +60,6 @@ async function fetchDailyStatsWithFallback(): Promise<any[]> {
     }
   }
   return [];
-}
-
-function mergeSliceMaps(
-  cached: Record<string, number>,
-  fresh: Record<string, number>
-): Record<string, number> {
-  const out: Record<string, number> = { ...cached, ...fresh };
-  for (const key of Object.keys(out)) {
-    const a = Number(cached?.[key] ?? 0) || 0;
-    const b = Number(fresh?.[key] ?? 0) || 0;
-    out[key] = Math.max(a, b);
-  }
-  return out;
 }
 
 export default function Home() {
@@ -119,9 +107,11 @@ export default function Home() {
               const detailRes = await apiClient.get(`/api/articles/${encodeURIComponent(article.articleId)}`);
               const detailData = extractApiData<any>(detailRes.data);
               const imageUrl = extractImageFromContent(detailData?.content || []);
-              return { ...article, thumbnailUrl: imageUrl || undefined };
+              const myQuizResults = Array.isArray(detailData?.myQuizResults) ? detailData.myQuizResults : [];
+              const isSolved = myQuizResults.some((v: any) => v === true || v === false);
+              return { ...article, thumbnailUrl: imageUrl || undefined, isSolved };
             } catch {
-              return article;
+              return { ...article, isSolved: false };
             }
           })
         );
@@ -203,13 +193,8 @@ export default function Home() {
         const dailyStats = Array.isArray(dailyPayload) ? dailyPayload : [];
         const freshMap = buildDailySliceMap(dailyStats);
 
-        let mergedMap: Record<string, number> = { ...freshMap };
+        const mergedMap: Record<string, number> = { ...freshMap };
         try {
-          const cachedRaw = await AsyncStorage.getItem(DAILY_SLICE_CACHE_KEY);
-          const cachedMap = cachedRaw ? JSON.parse(cachedRaw) : {};
-          if (cachedMap && typeof cachedMap === "object") {
-            mergedMap = mergeSliceMaps(cachedMap, freshMap);
-          }
           await AsyncStorage.setItem(DAILY_SLICE_CACHE_KEY, JSON.stringify(mergedMap));
         } catch {}
 
@@ -353,6 +338,14 @@ export default function Home() {
                           <Text style={s.cardReadBtn}>읽기 →</Text>
                         </View>
                       </View>
+                      {item.isSolved ? <View pointerEvents="none" style={s.solvedDim} /> : null}
+                      {item.isSolved ? (
+                        <Image
+                          source={require("../../assets/knight/toggle_2.png")}
+                          style={s.solvedBadge}
+                          resizeMode="contain"
+                        />
+                      ) : null}
                     </Animated.View>
                   </Pressable>
                 </Link>
@@ -409,4 +402,21 @@ const s = StyleSheet.create({
   cardSummary: { ...TYPO.bodySm, color: COLORS.textTertiary, lineHeight: 20, marginTop: SPACING.sm },
   cardFooter: { flexDirection: "row", justifyContent: "flex-end", marginTop: SPACING.sm },
   cardReadBtn: { ...TYPO.label, color: COLORS.primaryLight },
+  solvedDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.16)",
+  },
+  solvedBadge: {
+    position: "absolute",
+    left: 14,
+    bottom: 12,
+    width: 60,
+    height: 60,
+  },
 });
+
+
+
+
+
+
